@@ -1,0 +1,23 @@
+{
+  "name": "proof-of-panic-scripts",
+  "version": "0.1.0",
+  "private": true,
+  "description": "CLI scripts for Proof of Panic demo orchestration",
+  "scripts": {
+    "deploy": "npx ts-node 1-deploy.ts",
+    "initialize": "npx ts-node 2-initialize.ts",
+    "snapshot": "npx ts-node 3-snapshot.ts",
+    "verify": "npx ts-node 6-verify.ts",
+    "status": "npx ts-node 7-status.ts"
+  },
+  "dependencies": {
+    "@coral-xyz/anchor": "^0.32.0",
+    "@solana/web3.js": "^1.98.0",
+    "bs58": "^5.0.0"
+  },
+  "devDependencies": {
+    "ts-node": "^10.9.0",
+    "typescript": "^5.0.0",
+    "@types/node": "^20.0.0"
+  }
+}
