@@ -1,0 +1,16 @@
+[workspace]
+members = [
+    "programs/proof-of-panic",
+    "simulator",
+]
+resolver = "2"
+
+# Pin transitive dependencies to versions that don't require edition2024.
+# The Solana platform-tools bundle rustc 1.84 which doesn't support edition2024.
+[profile.release]
+overflow-checks = true
+lto = "fat"
+codegen-units = 1
+
+[profile.dev]
+overflow-checks = true

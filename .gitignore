@@ -1,0 +1,28 @@
+# System Files
+.DS_Store
+Thumbs.db
+
+# Rust / Cargo
+target/
+**/*.rs.bk
+
+# Solana / Anchor
+.anchor/
+test-ledger/
+
+# Node / JS / TS
+node_modules/
+scripts/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Noir / Nargo
+circuits/panic_proof/target/
+circuits/panic_proof/Verifier.toml
+circuits/panic_proof/Prover.toml
+circuits/panic_proof/results.json
+
+# Local Logs / Demo Snapshots
+*.log
+scripts/demo-snapshot.json
