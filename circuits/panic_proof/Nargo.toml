@@ -1,0 +1,6 @@
+[package]
+name = "panic_proof"
+type = "bin"
+authors = ["Proof of Panic"]
+
+[dependencies]
