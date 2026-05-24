@@ -1,53 +1,107 @@
 # Proof of Panic
 
-> A ZK-verified adversarial risk engine for Solana perpetual protocols.
+> **A ZK-verified adversarial risk engine for Solana perpetual protocols.**
 
-## What This Does
+Proof of Panic is a protocol safety system that uses zero-knowledge proofs to enable trustless, automated risk management for perpetual exchanges on Solana. It runs expensive stress-test simulations off-chain, generates a cryptographic proof that the simulation was mathematically correct, verifies the proof on-chain for ~200,000 compute units (regardless of position count), and autonomously activates a circuit breaker when the protocol becomes unsafe.
 
-Proof of Panic is a protocol safety system that:
+## Why Zero-Knowledge Proofs?
 
-1. **Simulates** a simplified perpetuals environment with leveraged positions
-2. **Injects** a market shock (e.g., SOL -30%) off-chain
-3. **Computes** the resulting liquidation cascades and bad debt deterministically
-4. **Generates** a Noir zero-knowledge proof that the simulation was correct
-5. **Verifies** the proof on-chain in a Solana program via Sunspot/Groth16
-6. **Activates** a circuit breaker when the protocol becomes unsafe
+Perpetual protocols face a fundamental problem: they need to stress-test their positions against adversarial market conditions, but on-chain simulation is prohibitively expensive.
 
-Everything runs locally with zero infrastructure cost.
+| Approach | Trustless? | Affordable? | Scales? |
+|:---------|:-----------|:------------|:--------|
+| On-chain simulation | ✅ | ❌ ~50K CU/position | ❌ Hits tx limits at ~28 positions |
+| Off-chain simulation (no proof) | ❌ Must trust simulator | ✅ | ✅ |
+| **Off-chain + ZK proof** | **✅ Proof guarantees correctness** | **✅ ~200K CU total** | **✅ O(1) verification** |
+
+A compromised simulator could report "protocol is safe" when it's actually insolvent. With ZK proofs, the circuit **re-derives all values from raw position data** — a malicious simulator cannot produce a valid proof for incorrect results.
 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                     LOCAL MACHINE                            │
-│                                                              │
-│  ┌──────────────┐    ┌──────────────┐    ┌───────────────┐  │
-│  │  Anchor       │    │  Off-chain    │    │  Noir Circuit  │  │
-│  │  Program      │◄───│  Simulator    │───►│  + Sunspot     │  │
-│  │  (on-chain)   │    │  (Rust bin)   │    │  (proof gen)   │  │
-│  └──────────────┘    └──────────────┘    └───────────────┘  │
-│                                                              │
-│  ┌──────────────────────────────────────────────────────┐    │
-│  │  solana-test-validator (local)                        │    │
-│  └──────────────────────────────────────────────────────┘    │
-└─────────────────────────────────────────────────────────────┘
+   On-Chain (Solana)              Off-Chain (Local)              ZK Layer (Noir)
+  ┌─────────────────┐          ┌─────────────────────┐        ┌──────────────────┐
+  │  GlobalState     │◄── ① ──►│  TypeScript          │        │                  │
+  │  RiskConfig      │ Snapshot │  Orchestrator        │        │  Noir Circuit     │
+  │  PositionBook    │          └─────────┬───────────┘        │  (panic_proof)    │
+  │  (zero-copy)     │                    │                    │                  │
+  └────────┬─────────┘                    ▼                    │  Verifies:       │
+           │                    ┌─────────────────────┐        │  • PnL math      │
+           │ ⑤ Verify          │  Rust Simulator      │──③──►│  • Margin ratios  │
+           │ + Circuit         │  (panic-simulator)   │        │  • Liquidations   │
+           │   Breaker         │                      │        │  • Solvency       │
+           │                    │  • apply_shock()     │        │  • Risk score     │
+           ◄────── ④ ──────────│  • evaluate_pnl()    │        └──────────────────┘
+                  Proof         │  • liquidate()       │              │ ④ Proof
+                  + Results     │  • compute_solvency()│◄─────────────┘
+                                └─────────────────────┘
 ```
+
+## The Pipeline
+
+| Step | What Happens | Time |
+|:-----|:-------------|:-----|
+| **① Snapshot** | TypeScript reads on-chain positions via RPC | ~1s |
+| **② Simulate** | Rust engine applies market shock, computes liquidation cascade | ~2ms |
+| **③ Prove** | Noir circuit compiles, generates ZK proof of simulation correctness | ~30s |
+| **④ Verify** | Anchor program verifies state hash + ZK proof on-chain | ~200K CU |
+| **⑤ Act** | If risk > threshold, circuit breaker fires: max leverage halved (10x → 5x) | Automatic |
+
+## War Room Dashboard
+
+The project includes a real-time visualization dashboard that animates the entire liquidation cascade:
+
+- **Protocol health meter** — Radial gauge animating from green to red
+- **Position cards** — Each trader's position with live health bars that deplete as margin erodes
+- **Liquidation cascade timeline** — Step-by-step animated sequence of positions collapsing
+- **Circuit breaker overlay** — Dramatic activation when the protocol enters emergency mode
+- **ZK proof verification panel** — Visual pipeline from snapshot → proof → on-chain verification
+- **5 adversarial scenarios** — Switch between different market conditions in real-time
+
+```bash
+cd app && npm run dev    # Opens at http://localhost:3000
+```
+
+## Adversarial Scenarios
+
+The system is tested against 5 distinct market conditions:
+
+| Scenario | Shock | Liquidated | Bad Debt | Outcome |
+|:---------|:------|:-----------|:---------|:--------|
+| **Volatility Shock** | SOL -30% | 4/5 | $21,590 | Circuit breaker fires |
+| **Mild Correction** | SOL -10% | 4/5 | $0 | Insurance absorbs losses |
+| **Flash Crash** | SOL -50% | 4/5 | $76,850 | Catastrophic insolvency |
+| **Short Squeeze** | SOL +40% | 1/5 | $0 | Short crushed, longs profit |
+| **Cascading Leverage** | SOL -30% | 8/8 | $108,695 | Total wipeout |
+
+Generate all scenarios: `./scripts/generate-scenarios.sh`
+
+## Performance
+
+| Metric | Value |
+|:-------|:------|
+| Simulation (5 positions) | ~2ms |
+| ZK proof generation | ~30s |
+| Proof size | 388 bytes |
+| On-chain verification | ~200,000 CU |
+| Total on-chain storage | 700 bytes |
+| Circuit gate count | ~31,000 |
+
+Full benchmarks: [`docs/BENCHMARKS.md`](docs/BENCHMARKS.md)
 
 ## Stack
 
-- **Solana / Anchor** — on-chain program with zero-copy account layouts
-- **Rust** — off-chain deterministic liquidation simulator
-- **Noir** — ZK circuit proving simulation correctness
-- **Sunspot** — Groth16 proof generation and on-chain verification
-- **Next.js** — protocol war-room dashboard (coming soon)
+- **Solana / Anchor** — On-chain program with zero-copy `#[repr(C)]` account layouts
+- **Rust** — Deterministic off-chain liquidation cascade engine
+- **Noir** — ZK circuit proving simulation correctness (~31K gates)
+- **Sunspot** — Groth16 proof generation and on-chain Solana verifier
+- **Next.js** — Protocol war-room dashboard with animated visualizations
 
 ## Prerequisites
 
 ```bash
-# Solana CLI
+# Solana CLI + Anchor
 sh -c "$(curl -sSfL https://release.anza.xyz/stable/install)"
-
-# Anchor
 cargo install --git https://github.com/coral-xyz/anchor avm --force
 avm install 0.32.0 && avm use 0.32.0
 
@@ -55,7 +109,7 @@ avm install 0.32.0 && avm use 0.32.0
 curl -L https://raw.githubusercontent.com/noir-lang/noirup/main/install | bash
 noirup
 
-# Sunspot
+# Sunspot (optional — for full Groth16 proofs)
 git clone https://github.com/reilabs/sunspot.git
 cd sunspot && go build -o sunspot . && mv sunspot /usr/local/bin/
 
@@ -72,52 +126,74 @@ cd sunspot && go build -o sunspot . && mv sunspot /usr/local/bin/
 # 2. Start local validator (in a separate terminal)
 solana-test-validator --reset
 
-# 3. Run the full demo
+# 3. Run the full end-to-end demo
 ./scripts/demo.sh
+
+# 4. Generate all adversarial scenarios
+./scripts/generate-scenarios.sh
+
+# 5. Launch the war-room dashboard
+cd app && npm install && npm run dev
 ```
 
 ## Demo Flow
 
-| Step | What Happens | Command |
-|:-----|:-------------|:--------|
-| 1 | Deploy program | `anchor deploy` |
-| 2 | Initialize protocol + 5 positions | `npx ts-node scripts/2-initialize.ts` |
-| 3 | Snapshot on-chain state | `npx ts-node scripts/3-snapshot.ts` |
-| 4 | Simulate 30% SOL crash | `./scripts/4-simulate.sh` |
-| 5 | Generate ZK proof | `./scripts/5-prove.sh` |
-| 6 | Verify proof on-chain | `npx ts-node scripts/6-verify.ts` |
-| 7 | Display final state | `npx ts-node scripts/7-status.ts` |
+| Step | Command | What Happens |
+|:-----|:--------|:-------------|
+| 1 | `anchor deploy` | Deploy on-chain program |
+| 2 | `npx ts-node scripts/2-initialize.ts` | Initialize protocol + 5 positions |
+| 3 | `npx ts-node scripts/3-snapshot.ts` | Snapshot on-chain state to JSON |
+| 4 | `./scripts/4-simulate.sh` | Simulate 30% SOL crash |
+| 5 | `./scripts/5-prove.sh` | Generate ZK proof |
+| 6 | `npx ts-node scripts/6-verify.ts` | Verify proof on-chain, trigger circuit breaker |
+| 7 | `npx ts-node scripts/7-status.ts` | Display final protocol state |
 
 ## Project Structure
 
 ```
 proof-of-panic/
-├── programs/proof-of-panic/   # Anchor on-chain program
+├── programs/proof-of-panic/     # Anchor on-chain program
 │   └── src/
-│       ├── state/             # Account structs (GlobalState, RiskConfig, PositionBook)
-│       ├── instructions/      # 4 instructions (init, positions, proof, risk)
-│       ├── constants.rs       # Seeds, scale factors, defaults
-│       └── errors.rs          # Custom error codes
-├── simulator/                 # Off-chain Rust stress-test engine
+│       ├── state/               # GlobalState, RiskConfig, PositionBook (zero-copy)
+│       ├── instructions/        # 4 instructions (init, positions, proof, risk)
+│       ├── constants.rs         # Seeds, scale factors, defaults
+│       └── errors.rs            # Custom error codes
+├── simulator/                   # Off-chain Rust stress-test engine
 │   └── src/
-│       ├── shock.rs           # Market shock (single price drop)
-│       ├── liquidation.rs     # Cascade engine (PnL + margin + liquidation)
-│       ├── solvency.rs        # Insurance fund + bad debt
-│       ├── commitment.rs      # SHA-256 state hash
-│       └── witness.rs         # Noir witness file generation
-├── circuits/panic_proof/      # Noir ZK circuit
-│   └── src/main.nr            # Proves simulation correctness
-├── scripts/                   # Demo orchestration scripts
-├── app/                       # Next.js dashboard (coming soon)
-└── tests/                     # LiteSVM + integration tests
+│       ├── scenarios.rs         # 5 built-in adversarial scenarios
+│       ├── shock.rs             # Market shock application
+│       ├── liquidation.rs       # Cascade engine (PnL + margin + liquidation)
+│       ├── solvency.rs          # Insurance fund + bad debt computation
+│       ├── commitment.rs        # SHA-256 state hash
+│       └── witness.rs           # Noir witness file generation
+├── circuits/panic_proof/        # Noir ZK circuit
+│   └── src/main.nr              # Proves simulation correctness
+├── app/                         # Next.js war-room dashboard
+│   └── src/app/page.tsx         # Animated visualization of all scenarios
+├── scripts/                     # Demo orchestration
+│   ├── demo.sh                  # Full end-to-end pipeline
+│   └── generate-scenarios.sh    # Generate all 5 scenario datasets
+└── docs/
+    ├── ARCHITECTURE.md          # Technical paper (math, threat model, ZK rationale)
+    └── BENCHMARKS.md            # Performance metrics and scaling analysis
 ```
 
 ## Key Design Decisions
 
-- **Zero-copy PositionBook**: Single account with bytemuck `#[repr(C)]` layout for efficient reads
-- **SHA-256 state commitment**: Flat hash (not Merkle tree) — simpler, sufficient for 8 positions
-- **Fixed-point arithmetic**: All values in microdollars (10^6 scale) — no floating point
-- **Feature-gated verification**: `test-mock-verify` flag bypasses Sunspot CPI in tests
+- **Zero-copy PositionBook**: Single account with bytemuck `#[repr(C)]` layout. Enables deterministic byte serialization for SHA-256 hashing across Rust, Noir, and on-chain.
+- **Fixed-point arithmetic**: All values in microdollars (10⁶ scale). No floating point — ensures bit-exact reproducibility across all three execution environments.
+- **SHA-256 state commitment**: Flat hash of 512 canonical bytes. Anchors the ZK proof to actual on-chain state. Production path: Concurrent Merkle Tree for O(log N) scaling.
+- **Feature-gated verification**: `test-mock-verify` flag bypasses Sunspot CPI in testing. Circuit still compiles and executes; only the on-chain verification CPI is skipped.
+
+## Security
+
+See the full threat model in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md#threat-model).
+
+Key security properties:
+- **Malicious simulator protection**: ZK circuit re-derives all values from raw data — incorrect results cannot produce valid proofs
+- **State anchoring**: On-chain SHA-256 of live PositionBook rejects proofs against stale/tampered state
+- **Replay protection**: State hash uniqueness + slot tracking prevent proof reuse
+- **False panic prevention**: Circuit constraints enforce correct risk score computation — cannot fabricate emergencies
 
 ## License
 

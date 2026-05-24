@@ -1,0 +1,111 @@
+{
+  "pre_shock_price": 150000000,
+  "post_shock_price": 105000000,
+  "shock_bps": 3000,
+  "position_results": [
+    {
+      "index": 0,
+      "unrealized_pnl": -36000000000,
+      "margin_ratio_bps": 0,
+      "is_liquidated": true,
+      "liquidation_loss": 28000000000,
+      "effective_collateral": -28000000000
+    },
+    {
+      "index": 1,
+      "unrealized_pnl": -30921052631,
+      "margin_ratio_bps": 0,
+      "is_liquidated": true,
+      "liquidation_loss": 25921052631,
+      "effective_collateral": -25921052631
+    },
+    {
+      "index": 2,
+      "unrealized_pnl": -23243243243,
+      "margin_ratio_bps": 0,
+      "is_liquidated": true,
+      "liquidation_loss": 19243243243,
+      "effective_collateral": -19243243243
+    },
+    {
+      "index": 3,
+      "unrealized_pnl": -24193548387,
+      "margin_ratio_bps": 0,
+      "is_liquidated": true,
+      "liquidation_loss": 21193548387,
+      "effective_collateral": -21193548387
+    },
+    {
+      "index": 4,
+      "unrealized_pnl": -16772151898,
+      "margin_ratio_bps": 0,
+      "is_liquidated": true,
+      "liquidation_loss": 14772151898,
+      "effective_collateral": -14772151898
+    },
+    {
+      "index": 5,
+      "unrealized_pnl": -25714285714,
+      "margin_ratio_bps": 0,
+      "is_liquidated": true,
+      "liquidation_loss": 19714285714,
+      "effective_collateral": -19714285714
+    },
+    {
+      "index": 6,
+      "unrealized_pnl": -21960784313,
+      "margin_ratio_bps": 0,
+      "is_liquidated": true,
+      "liquidation_loss": 18460784313,
+      "effective_collateral": -18460784313
+    },
+    {
+      "index": 7,
+      "unrealized_pnl": -12890625000,
+      "margin_ratio_bps": 0,
+      "is_liquidated": true,
+      "liquidation_loss": 11390625000,
+      "effective_collateral": -11390625000
+    }
+  ],
+  "num_liquidated": 8,
+  "total_losses": 158695691186,
+  "insurance_fund_remaining": 0,
+  "total_bad_debt": 108695691186,
+  "risk_score": 1000000,
+  "protocol_solvent": false,
+  "state_hash": [
+    126,
+    107,
+    199,
+    146,
+    236,
+    105,
+    179,
+    99,
+    46,
+    128,
+    215,
+    150,
+    40,
+    218,
+    248,
+    206,
+    163,
+    228,
+    191,
+    233,
+    236,
+    106,
+    137,
+    205,
+    85,
+    181,
+    206,
+    233,
+    208,
+    38,
+    114,
+    205
+  ]
+}

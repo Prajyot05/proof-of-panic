@@ -1,0 +1,52 @@
+{
+  "oracle_price": 150000000,
+  "insurance_fund": 50000000000,
+  "positions": [
+    {
+      "owner": "64f24d69f85380b96537c9f477610355d49b863bed2f84fb43cd21111b8d5e49",
+      "collateral": 10000000000,
+      "size": 100000000000,
+      "entry_price": 150000000,
+      "is_long": true,
+      "is_open": true
+    },
+    {
+      "owner": "6388add0775fb450b3e35d8fdde0c17bb32c9962c35d7aa64b709aa77c6f3edf",
+      "collateral": 5000000000,
+      "size": 75000000000,
+      "entry_price": 155000000,
+      "is_long": true,
+      "is_open": true
+    },
+    {
+      "owner": "fea4bbf18be29be03373d81edde283b59bef778323ad6107ba69293b1656d70f",
+      "collateral": 3000000000,
+      "size": 60000000000,
+      "entry_price": 160000000,
+      "is_long": true,
+      "is_open": true
+    },
+    {
+      "owner": "f6a3bd596478db2e7cae73c8060326eced4c6f50956c5c1af16796f8ce36c641",
+      "collateral": 8000000000,
+      "size": 40000000000,
+      "entry_price": 145000000,
+      "is_long": false,
+      "is_open": true
+    },
+    {
+      "owner": "ad9bf3ebd76b61a0b47c56dab94ac2eb1c7772550c3bcc73273e8cc1e76fd783",
+      "collateral": 2000000000,
+      "size": 50000000000,
+      "entry_price": 158000000,
+      "is_long": true,
+      "is_open": true
+    }
+  ],
+  "risk_config": {
+    "maintenance_margin_bps": 500,
+    "liquidation_fee_bps": 250,
+    "circuit_breaker_threshold": 700000,
+    "shock_magnitude_bps": 4000
+  }
+}

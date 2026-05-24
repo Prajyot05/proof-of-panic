@@ -1,13 +1,17 @@
 //! Proof of Panic — Off-chain Deterministic Simulator
 //!
-//! Reads a JSON snapshot of on-chain protocol state, applies a market shock,
-//! computes the liquidation cascade, and outputs Noir witness files.
+//! Reads a JSON snapshot of on-chain protocol state (or uses a built-in scenario),
+//! applies a market shock, computes the liquidation cascade, and outputs
+//! Noir witness files and a results JSON.
 //!
 //! USAGE:
 //!   panic-simulator --snapshot <path> --output <dir> [--shock-bps 3000]
+//!   panic-simulator --scenario volatility-shock --output <dir>
+//!   panic-simulator --list-scenarios
 
 mod commitment;
 mod liquidation;
+mod scenarios;
 mod shock;
 mod solvency;
 mod types;
@@ -19,6 +23,7 @@ use clap::Parser;
 
 use crate::commitment::compute_state_hash;
 use crate::liquidation::evaluate_positions;
+use crate::scenarios::{get_scenario, list_scenarios, scenario_to_snapshot};
 use crate::shock::apply_shock;
 use crate::solvency::compute_solvency;
 use crate::types::*;
@@ -27,27 +32,74 @@ use crate::types::*;
 #[command(name = "panic-simulator")]
 #[command(about = "Off-chain stress-test simulator for Proof of Panic")]
 struct Args {
-    /// Path to the JSON snapshot file
+    /// Path to the JSON snapshot file (mutually exclusive with --scenario)
     #[arg(short, long)]
-    snapshot: PathBuf,
+    snapshot: Option<PathBuf>,
+
+    /// Use a built-in scenario instead of a snapshot file
+    #[arg(long)]
+    scenario: Option<String>,
+
+    /// List all available built-in scenarios and exit
+    #[arg(long)]
+    list_scenarios: bool,
 
     /// Output directory for Prover.toml, Verifier.toml, and results.json
     #[arg(short, long)]
-    output: PathBuf,
+    output: Option<PathBuf>,
 
-    /// Shock magnitude in basis points (default: from snapshot risk_config)
+    /// Shock magnitude in basis points (default: from snapshot/scenario risk_config)
     #[arg(long)]
     shock_bps: Option<u64>,
+
+    /// For short-squeeze scenario: apply shock as a price RISE instead of drop
+    #[arg(long)]
+    shock_up: bool,
 }
 
 fn main() {
     let args = Args::parse();
 
-    // ── Read snapshot ──
-    let snapshot_str =
-        std::fs::read_to_string(&args.snapshot).expect("Failed to read snapshot file");
-    let snapshot: Snapshot =
-        serde_json::from_str(&snapshot_str).expect("Failed to parse snapshot JSON");
+    // Handle --list-scenarios
+    if args.list_scenarios {
+        println!("Available scenarios:");
+        for name in list_scenarios() {
+            let s = get_scenario(name).unwrap();
+            println!("  {:<22} {}", name, s.description);
+        }
+        return;
+    }
+
+    // Load snapshot from file or scenario
+    let (snapshot, shock_direction_up) = if let Some(scenario_name) = &args.scenario {
+        let scenario = get_scenario(scenario_name)
+            .unwrap_or_else(|| {
+                eprintln!("Unknown scenario: {}", scenario_name);
+                eprintln!("Available scenarios:");
+                for name in list_scenarios() {
+                    eprintln!("  {}", name);
+                }
+                std::process::exit(1);
+            });
+        println!("Scenario: {} — {}", scenario.name, scenario.description);
+        let is_up = scenario_name == "short-squeeze" || args.shock_up;
+        (scenario_to_snapshot(&scenario), is_up)
+    } else if let Some(snapshot_path) = &args.snapshot {
+        let snapshot_str =
+            std::fs::read_to_string(snapshot_path).expect("Failed to read snapshot file");
+        let snapshot: Snapshot =
+            serde_json::from_str(&snapshot_str).expect("Failed to parse snapshot JSON");
+        (snapshot, args.shock_up)
+    } else {
+        eprintln!("Either --snapshot <path> or --scenario <name> is required.");
+        eprintln!("Use --list-scenarios to see available scenarios.");
+        std::process::exit(1);
+    };
+
+    let output_dir = args.output.unwrap_or_else(|| {
+        eprintln!("--output <dir> is required.");
+        std::process::exit(1);
+    });
 
     let shock_bps = args
         .shock_bps
@@ -60,10 +112,16 @@ fn main() {
 
     // ── Apply shock ──
     let pre_shock_price = snapshot.oracle_price;
-    let post_shock_price = apply_shock(pre_shock_price, shock_bps);
+    let post_shock_price = if shock_direction_up {
+        apply_shock_up(pre_shock_price, shock_bps)
+    } else {
+        apply_shock(pre_shock_price, shock_bps)
+    };
 
+    let direction = if shock_direction_up { "+" } else { "-" };
     println!(
-        "⚡ Shock: SOL -{}.{}% (${}.{:02} → ${}.{:02})",
+        "⚡ Shock: SOL {}{}.{}% (${}.{:02} → ${}.{:02})",
+        direction,
         shock_bps / 100,
         shock_bps % 100,
         pre_shock_price / SCALE,
@@ -88,7 +146,11 @@ fn main() {
         .enumerate()
     {
         let direction = if pos.is_long { "LONG" } else { "SHORT" };
-        let leverage = pos.size / pos.collateral;
+        let leverage = if pos.collateral > 0 {
+            pos.size / pos.collateral
+        } else {
+            0
+        };
         let pnl_sign = if res.unrealized_pnl < 0 { "-" } else { "+" };
         let pnl_abs = res.unrealized_pnl.unsigned_abs();
         let status = if res.is_liquidated {
@@ -169,25 +231,43 @@ fn main() {
     };
 
     // ── Write outputs ──
-    std::fs::create_dir_all(&args.output).expect("Failed to create output directory");
+    std::fs::create_dir_all(&output_dir).expect("Failed to create output directory");
 
     // Write results JSON (for frontend consumption)
     let results_json = serde_json::to_string_pretty(&result).expect("Failed to serialize results");
-    std::fs::write(args.output.join("results.json"), results_json)
+    std::fs::write(output_dir.join("results.json"), results_json)
         .expect("Failed to write results.json");
 
+    // Also write the snapshot for the dashboard to consume
+    let snapshot_json = serde_json::to_string_pretty(&snapshot).expect("Failed to serialize snapshot");
+    std::fs::write(output_dir.join("snapshot.json"), snapshot_json)
+        .expect("Failed to write snapshot.json");
+
     // Write Noir witness files
-    witness::write_witness_files(&args.output, &snapshot, &result)
+    witness::write_witness_files(&output_dir, &snapshot, &result)
         .expect("Failed to write witness files");
 
     println!();
-    println!("✓ Witness written to {}/Prover.toml", args.output.display());
+    println!("✓ Witness written to {}/Prover.toml", output_dir.display());
     println!(
         "✓ Public inputs written to {}/Verifier.toml",
-        args.output.display()
+        output_dir.display()
     );
     println!(
         "✓ Results written to {}/results.json",
-        args.output.display()
+        output_dir.display()
     );
+    println!(
+        "✓ Snapshot written to {}/snapshot.json",
+        output_dir.display()
+    );
+}
+
+/// Apply a basis-points shock as a price RISE (for short-squeeze scenarios).
+fn apply_shock_up(price: u64, shock_bps: u64) -> u64 {
+    let increase_bps = BPS_DENOMINATOR + shock_bps;
+    price
+        .checked_mul(increase_bps)
+        .expect("Price * increase_bps overflow")
+        / BPS_DENOMINATOR
 }

@@ -1,0 +1,87 @@
+{
+  "pre_shock_price": 150000000,
+  "post_shock_price": 105000000,
+  "shock_bps": 3000,
+  "position_results": [
+    {
+      "index": 0,
+      "unrealized_pnl": -30000000000,
+      "margin_ratio_bps": 0,
+      "is_liquidated": true,
+      "liquidation_loss": 20000000000,
+      "effective_collateral": -20000000000
+    },
+    {
+      "index": 1,
+      "unrealized_pnl": -24193548387,
+      "margin_ratio_bps": 0,
+      "is_liquidated": true,
+      "liquidation_loss": 19193548387,
+      "effective_collateral": -19193548387
+    },
+    {
+      "index": 2,
+      "unrealized_pnl": -20625000000,
+      "margin_ratio_bps": 0,
+      "is_liquidated": true,
+      "liquidation_loss": 17625000000,
+      "effective_collateral": -17625000000
+    },
+    {
+      "index": 3,
+      "unrealized_pnl": 11034482758,
+      "margin_ratio_bps": 4758,
+      "is_liquidated": false,
+      "liquidation_loss": 0,
+      "effective_collateral": 19034482758
+    },
+    {
+      "index": 4,
+      "unrealized_pnl": -16772151898,
+      "margin_ratio_bps": 0,
+      "is_liquidated": true,
+      "liquidation_loss": 14772151898,
+      "effective_collateral": -14772151898
+    }
+  ],
+  "num_liquidated": 4,
+  "total_losses": 71590700285,
+  "insurance_fund_remaining": 0,
+  "total_bad_debt": 21590700285,
+  "risk_score": 771096,
+  "protocol_solvent": false,
+  "state_hash": [
+    173,
+    12,
+    122,
+    93,
+    204,
+    138,
+    164,
+    242,
+    93,
+    172,
+    98,
+    180,
+    131,
+    126,
+    126,
+    212,
+    237,
+    162,
+    155,
+    204,
+    80,
+    82,
+    63,
+    251,
+    152,
+    204,
+    175,
+    51,
+    176,
+    135,
+    133,
+    117
+  ]
+}

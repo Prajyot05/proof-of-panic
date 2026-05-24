@@ -1,0 +1,76 @@
+{
+  "oracle_price": 150000000,
+  "insurance_fund": 50000000000,
+  "positions": [
+    {
+      "owner": "e282c532ab27d96902a763c6e441eb2f428d1ec9cdff439fbba92040683ee3be",
+      "collateral": 8000000000,
+      "size": 120000000000,
+      "entry_price": 150000000,
+      "is_long": true,
+      "is_open": true
+    },
+    {
+      "owner": "7d97cb6059219e683df288e86d0481bcf41cfae3c18389e2a3633a385cbcd634",
+      "collateral": 5000000000,
+      "size": 100000000000,
+      "entry_price": 152000000,
+      "is_long": true,
+      "is_open": true
+    },
+    {
+      "owner": "a89b58a33a6a0d53dfa10ef5a8afc7e6bea83db0032380100fee65d663c8992d",
+      "collateral": 4000000000,
+      "size": 80000000000,
+      "entry_price": 148000000,
+      "is_long": true,
+      "is_open": true
+    },
+    {
+      "owner": "85816d3eda5a31bfa828784b469142944a172342abc056849b9f55281da9838e",
+      "collateral": 3000000000,
+      "size": 75000000000,
+      "entry_price": 155000000,
+      "is_long": true,
+      "is_open": true
+    },
+    {
+      "owner": "704a11a6f6488d0ff240567d5f711fd16d940093bf4759871da44842db214a63",
+      "collateral": 2000000000,
+      "size": 50000000000,
+      "entry_price": 158000000,
+      "is_long": true,
+      "is_open": true
+    },
+    {
+      "owner": "c11627010a19a0f4daa70326e11017d0ae640753a2242fc3fa3ea07068e0ec9e",
+      "collateral": 6000000000,
+      "size": 90000000000,
+      "entry_price": 147000000,
+      "is_long": true,
+      "is_open": true
+    },
+    {
+      "owner": "1dadb8fa52715a1e3a3ed2a4868f599304c71a0299371bb070d7b6402c7d3146",
+      "collateral": 3500000000,
+      "size": 70000000000,
+      "entry_price": 153000000,
+      "is_long": true,
+      "is_open": true
+    },
+    {
+      "owner": "767107327bbd381c301d82d3e9072c009cf1d6e5089a1913f400351f463a78b4",
+      "collateral": 1500000000,
+      "size": 37500000000,
+      "entry_price": 160000000,
+      "is_long": true,
+      "is_open": true
+    }
+  ],
+  "risk_config": {
+    "maintenance_margin_bps": 500,
+    "liquidation_fee_bps": 250,
+    "circuit_breaker_threshold": 700000,
+    "shock_magnitude_bps": 3000
+  }
+}
