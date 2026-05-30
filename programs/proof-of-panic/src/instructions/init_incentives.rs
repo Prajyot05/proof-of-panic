@@ -1,4 +1,5 @@
 use anchor_lang::prelude::*;
+use anchor_lang::system_program;
 
 use crate::constants::*;
 use crate::state::*;
@@ -43,6 +44,7 @@ pub struct InitIncentives<'info> {
         space = 0,
         seeds = [REWARD_VAULT_SEED],
         bump,
+        owner = system_program::ID,
     )]
     /// CHECK: System account owned by system program
     pub reward_vault: UncheckedAccount<'info>,

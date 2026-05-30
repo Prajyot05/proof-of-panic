@@ -1,4 +1,5 @@
 use anchor_lang::prelude::*;
+use anchor_lang::system_program;
 use anchor_lang::solana_program::hash::hash;
 
 use crate::constants::*;
@@ -343,6 +344,7 @@ pub struct SubmitProofAndVerify<'info> {
         mut,
         seeds = [REWARD_VAULT_SEED],
         bump,
+        owner = system_program::ID,
     )]
     /// CHECK: System account vault
     pub reward_vault: Option<UncheckedAccount<'info>>,

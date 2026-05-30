@@ -27,6 +27,7 @@ const PUBLIC_VALUES_PATH = resolve(
   __dirname,
   "../outputs/sp1/public_values.bin"
 );
+const SP1_VERIFIER_PROGRAM_ID = process.env.SP1_VERIFIER_PROGRAM_ID;
 
 async function main() {
   const connection = new web3.Connection("http://localhost:8899", "confirmed");
@@ -134,16 +135,25 @@ async function main() {
       units: 500_000,
     });
 
+    if (!SP1_VERIFIER_PROGRAM_ID) {
+      console.error("❌ SP1_VERIFIER_PROGRAM_ID is not set.");
+      process.exit(1);
+    }
+
     const accounts: Record<string, web3.PublicKey> = {
       submitter: wallet.publicKey,
       globalState: globalStatePda,
       riskConfig: riskConfigPda,
       positionBook: positionBookPda,
-      sp1Verifier: new web3.PublicKey("11111111111111111111111111111111"),
-      incentivesConfig: incentivesConfigPda,
-      rewardVault: rewardVaultPda,
+      sp1Verifier: new web3.PublicKey(SP1_VERIFIER_PROGRAM_ID),
       systemProgram: web3.SystemProgram.programId,
     };
+    const incentivesInfo = await connection.getAccountInfo(incentivesConfigPda);
+    const vaultInfo = await connection.getAccountInfo(rewardVaultPda);
+    if (incentivesInfo && vaultInfo) {
+      accounts.incentivesConfig = incentivesConfigPda;
+      accounts.rewardVault = rewardVaultPda;
+    }
     if (pythPriceAccount) {
       accounts.pythOracle = new web3.PublicKey(pythPriceAccount);
     }

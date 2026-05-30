@@ -132,6 +132,7 @@ pub mod proof_of_panic {
         new_max_leverage: Option<u64>,
         new_maintenance_margin_bps: Option<u64>,
         new_liquidation_target_margin_bps: Option<u64>,
+        new_governance_timelock_slots: Option<u64>,
         new_circuit_breaker_threshold: Option<u64>,
         reset_circuit_breaker: bool,
     ) -> Result<()> {
@@ -140,6 +141,7 @@ pub mod proof_of_panic {
             new_max_leverage,
             new_maintenance_margin_bps,
             new_liquidation_target_margin_bps,
+            new_governance_timelock_slots,
             new_circuit_breaker_threshold,
             reset_circuit_breaker,
         )

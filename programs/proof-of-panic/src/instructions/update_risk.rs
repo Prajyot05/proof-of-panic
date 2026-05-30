@@ -10,16 +10,31 @@ pub fn handler(
     new_max_leverage: Option<u64>,
     new_maintenance_margin_bps: Option<u64>,
     new_liquidation_target_margin_bps: Option<u64>,
+    new_governance_timelock_slots: Option<u64>,
     new_circuit_breaker_threshold: Option<u64>,
     reset_circuit_breaker: bool,
 ) -> Result<()> {
     let global_state = &mut ctx.accounts.global_state;
     let risk_config = &mut ctx.accounts.risk_config;
+    let clock = Clock::get()?;
 
     require!(
         global_state.authority == ctx.accounts.authority.key(),
         PanicError::Unauthorized
     );
+
+    if new_max_leverage.is_some()
+        || new_maintenance_margin_bps.is_some()
+        || new_liquidation_target_margin_bps.is_some()
+        || new_governance_timelock_slots.is_some()
+        || new_circuit_breaker_threshold.is_some()
+    {
+        require!(
+            clock.slot >= global_state.last_risk_update_slot + global_state.governance_timelock_slots,
+            PanicError::TimelockNotExpired
+        );
+        global_state.last_risk_update_slot = clock.slot;
+    }
 
     if let Some(leverage) = new_max_leverage {
         require!(leverage > 0 && leverage <= 100 * SCALE, PanicError::InvalidRiskParam);
@@ -44,6 +59,12 @@ pub fn handler(
         msg!("Liquidation target margin updated to {} bps", target_margin);
     }
 
+    if let Some(timelock_slots) = new_governance_timelock_slots {
+        require!(timelock_slots > 0, PanicError::InvalidRiskParam);
+        global_state.governance_timelock_slots = timelock_slots;
+        msg!("Governance timelock updated to {} slots", timelock_slots);
+    }
+
     if let Some(threshold) = new_circuit_breaker_threshold {
         require!(threshold <= RISK_SCORE_MAX, PanicError::InvalidRiskParam);
         risk_config.circuit_breaker_threshold = threshold;
@@ -51,7 +72,6 @@ pub fn handler(
     }
 
     if reset_circuit_breaker {
-        let clock = Clock::get()?;
         require!(
             clock.slot >= global_state.circuit_breaker_activation_slot + CB_RESET_TIMELOCK_SLOTS,
             PanicError::TimelockNotExpired
