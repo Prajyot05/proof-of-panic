@@ -55,6 +55,14 @@ async function main() {
     [Buffer.from("position_book")],
     programId
   );
+  const [incentivesConfigPda] = web3.PublicKey.findProgramAddressSync(
+    [Buffer.from("incentives_config")],
+    programId
+  );
+  const [rewardVaultPda] = web3.PublicKey.findProgramAddressSync(
+    [Buffer.from("reward_vault")],
+    programId
+  );
   const pythPriceAccount = process.env.PYTH_PRICE_ACCOUNT;
 
   // Read simulation results
@@ -131,6 +139,10 @@ async function main() {
       globalState: globalStatePda,
       riskConfig: riskConfigPda,
       positionBook: positionBookPda,
+      sp1Verifier: new web3.PublicKey("11111111111111111111111111111111"),
+      incentivesConfig: incentivesConfigPda,
+      rewardVault: rewardVaultPda,
+      systemProgram: web3.SystemProgram.programId,
     };
     if (pythPriceAccount) {
       accounts.pythOracle = new web3.PublicKey(pythPriceAccount);

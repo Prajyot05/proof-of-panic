@@ -47,6 +47,14 @@ async function main() {
     [Buffer.from("position_book")],
     programId
   );
+  const [incentivesConfigPda] = web3.PublicKey.findProgramAddressSync(
+    [Buffer.from("incentives_config")],
+    programId
+  );
+  const [rewardVaultPda] = web3.PublicKey.findProgramAddressSync(
+    [Buffer.from("reward_vault")],
+    programId
+  );
 
   console.log("");
   console.log("PDA Addresses:");
@@ -61,7 +69,6 @@ async function main() {
     console.log("⚠ Protocol already initialized — skipping initialization");
   } else {
     // Initialize protocol
-    console.log("Initializing protocol...");
     const initTx = await program.methods
       .initializeProtocol()
       .accounts({
@@ -74,6 +81,36 @@ async function main() {
       .signers([wallet])
       .rpc();
     console.log(`✓ Protocol initialized (tx: ${initTx.slice(0, 16)}...)`);
+
+    // Initialize incentives
+    console.log("Initializing incentives...");
+    const initIncentivesTx = await program.methods
+      .initializeIncentives(
+        new anchor.BN(50_000_000), // 0.05 SOL reward
+        new anchor.BN(10), // 10 slot cooldown
+        true // enabled
+      )
+      .accounts({
+        authority: wallet.publicKey,
+        incentivesConfig: incentivesConfigPda,
+        rewardVault: rewardVaultPda,
+        systemProgram: web3.SystemProgram.programId,
+      })
+      .signers([wallet])
+      .rpc();
+    console.log(`✓ Incentives initialized (tx: ${initIncentivesTx.slice(0, 16)}...)`);
+
+    // Fund reward vault with 1 SOL
+    const fundTx = await program.methods
+      .fundRewardVault(new anchor.BN(1_000_000_000))
+      .accounts({
+        funder: wallet.publicKey,
+        rewardVault: rewardVaultPda,
+        systemProgram: web3.SystemProgram.programId,
+      })
+      .signers([wallet])
+      .rpc();
+    console.log(`✓ Reward vault funded with 1 SOL (tx: ${fundTx.slice(0, 16)}...)`);
   }
 
   // Check if positions already exist
