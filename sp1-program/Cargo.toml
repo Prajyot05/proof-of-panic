@@ -1,0 +1,13 @@
+[workspace]
+
+[package]
+version = "0.1.0"
+name = "panic-sp1-program"
+edition = "2021"
+
+[dependencies]
+sp1-zkvm = { version = "6.0.1" }
+panic-simulator = { path = "../simulator" }
+bincode = "1.3.3"
+serde = { version = "1.0", features = ["derive"] }
+sha2 = "0.10.8"

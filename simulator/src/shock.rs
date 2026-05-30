@@ -18,6 +18,14 @@ pub fn apply_shock(price: u64, shock_bps: u64) -> u64 {
         / BPS_DENOMINATOR
 }
 
+/// Apply a basis-points upward shock to a price.
+pub fn apply_shock_up(price: u64, shock_bps: u64) -> u64 {
+    let multiplier = BPS_DENOMINATOR.saturating_add(shock_bps);
+    price
+        .checked_mul(multiplier)
+        .expect("Price * multiplier overflow")
+        / BPS_DENOMINATOR
+}
 #[cfg(test)]
 mod tests {
     use super::*;

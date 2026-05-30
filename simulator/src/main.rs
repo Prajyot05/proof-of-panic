@@ -9,24 +9,16 @@
 //!   panic-simulator --scenario volatility-shock --output <dir>
 //!   panic-simulator --list-scenarios
 
-mod commitment;
-mod liquidation;
-mod scenarios;
-mod shock;
-mod solvency;
-mod types;
-mod witness;
-
 use std::path::PathBuf;
 
 use clap::Parser;
 
-use crate::commitment::compute_state_hash;
-use crate::liquidation::evaluate_positions;
-use crate::scenarios::{get_scenario, list_scenarios, scenario_to_snapshot};
-use crate::shock::apply_shock;
-use crate::solvency::compute_solvency;
-use crate::types::*;
+use panic_simulator::commitment::compute_state_hash;
+use panic_simulator::liquidation::evaluate_positions;
+use panic_simulator::scenarios::{get_scenario, list_scenarios, scenario_to_snapshot};
+use panic_simulator::shock::apply_shock;
+use panic_simulator::solvency::compute_solvency;
+use panic_simulator::types::*;
 
 #[derive(Parser, Debug)]
 #[command(name = "panic-simulator")]
@@ -132,10 +124,11 @@ fn main() {
     println!();
 
     // ── Evaluate positions ──
-    let position_results = evaluate_positions(
-        &snapshot.positions,
+    let mut positions = snapshot.positions.clone();
+    let (position_results, final_post_shock_price) = evaluate_positions(
+        &mut positions,
         post_shock_price,
-        snapshot.risk_config.maintenance_margin_bps,
+        &snapshot.risk_config,
     );
 
     println!("Position Results:");
@@ -215,10 +208,10 @@ fn main() {
             .collect::<String>()
     );
 
-    // ── Build result ──
+    // ── Output Final SimResult ──
     let result = SimResult {
-        pre_shock_price,
-        post_shock_price,
+        pre_shock_price: snapshot.oracle_price,
+        post_shock_price: final_post_shock_price,
         shock_bps,
         position_results,
         num_liquidated,
@@ -243,16 +236,8 @@ fn main() {
     std::fs::write(output_dir.join("snapshot.json"), snapshot_json)
         .expect("Failed to write snapshot.json");
 
-    // Write Noir witness files
-    witness::write_witness_files(&output_dir, &snapshot, &result)
-        .expect("Failed to write witness files");
-
     println!();
-    println!("✓ Witness written to {}/Prover.toml", output_dir.display());
-    println!(
-        "✓ Public inputs written to {}/Verifier.toml",
-        output_dir.display()
-    );
+    println!("✓ Outputs generated in {:?}", output_dir);
     println!(
         "✓ Results written to {}/results.json",
         output_dir.display()

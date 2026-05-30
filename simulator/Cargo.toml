@@ -4,6 +4,10 @@ version = "0.1.0"
 edition = "2021"
 description = "Off-chain deterministic stress-test simulator for Proof of Panic"
 
+[lib]
+name = "panic_simulator"
+path = "src/lib.rs"
+
 [[bin]]
 name = "panic-simulator"
 path = "src/main.rs"
