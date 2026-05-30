@@ -1,36 +1,36 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap');
 
 /* ── Base Theme Variables (Minimalist Light Mode Default) ── */
 :root {
   --bg-primary: #ffffff;
-  --bg-secondary: #fafafa;
+  --bg-secondary: #f4f4f5;
   --bg-surface: #ffffff;
-  --bg-hover: #f4f4f5;
+  --bg-hover: #e4e4e7;
   
   --text-primary: #18181b;
-  --text-secondary: #71717a;
+  --text-secondary: #52525b;
   --text-muted: #a1a1aa;
   
   --border-subtle: #e4e4e7;
   --border-strong: #d4d4d8;
   
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.04), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
   
-  --color-safe: #10b981;
-  --color-safe-bg: #ecfdf5;
+  --color-safe: #059669;
+  --color-safe-bg: #d1fae5;
   
-  --color-warning: #f59e0b;
-  --color-warning-bg: #fffbeb;
+  --color-warning: #d97706;
+  --color-warning-bg: #fef3c7;
   
-  --color-danger: #ef4444;
-  --color-danger-bg: #fef2f2;
+  --color-danger: #dc2626;
+  --color-danger-bg: #fee2e2;
   
-  --color-info: #3b82f6;
-  --color-info-bg: #eff6ff;
+  --color-info: #2563eb;
+  --color-info-bg: #dbeafe;
 
-  --font-sans: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'IBM Plex Mono', 'Fira Code', monospace;
   
   --radius-sm: 4px;
   --radius-md: 6px;
@@ -39,34 +39,38 @@
   --radius-full: 9999px;
 }
 
-/* ── Dark Theme (Minimalist Matte) ── */
+/* ── Dark Theme (Minimalist Matte - Reduced Contrast) ── */
 [data-theme='dark'] {
-  --bg-primary: #000000;
-  --bg-secondary: #09090b;
-  --bg-surface: #000000;
-  --bg-hover: #18181b;
+  /* Using #0f0f11 instead of pure black to reduce eye strain */
+  --bg-primary: #0f0f11;
+  --bg-secondary: #18181b;
+  --bg-surface: #0f0f11;
+  --bg-hover: #27272a;
   
-  --text-primary: #fafafa;
+  /* Slightly softened white */
+  --text-primary: #f4f4f5;
   --text-secondary: #a1a1aa;
-  --text-muted: #52525b;
+  --text-muted: #71717a;
   
   --border-subtle: #27272a;
   --border-strong: #3f3f46;
   
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.5);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
   
+  /* Pastels and softer tones to prevent eye strain against dark backgrounds */
   --color-safe: #34d399;
-  --color-safe-bg: rgba(16, 185, 129, 0.1);
+  --color-safe-bg: rgba(52, 211, 153, 0.1);
   
   --color-warning: #fbbf24;
-  --color-warning-bg: rgba(245, 158, 11, 0.1);
+  --color-warning-bg: rgba(251, 191, 36, 0.1);
   
-  --color-danger: #f87171;
-  --color-danger-bg: rgba(239, 68, 68, 0.1);
+  /* Softened red (pastel rose) instead of glaring neon red */
+  --color-danger: #fb7185;
+  --color-danger-bg: rgba(251, 113, 133, 0.1);
   
   --color-info: #60a5fa;
-  --color-info-bg: rgba(59, 130, 246, 0.1);
+  --color-info-bg: rgba(96, 165, 250, 0.1);
 }
 
 /* ── Reset & Base ── */
@@ -77,9 +81,10 @@
 }
 
 html {
-  font-size: 14px; /* Slightly smaller base font for pro density */
+  font-size: 14px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-y: scroll;
 }
 
 body {
@@ -101,7 +106,7 @@ body {
 
 /* ── Layout ── */
 .war-room {
-  max-width: 1200px; /* Tighter max-width for cleaner reading lines */
+  max-width: 1200px;
   margin: 0 auto;
   padding: 2rem;
 }
@@ -143,7 +148,7 @@ body {
 .header-subtitle {
   font-size: 0.85rem;
   color: var(--text-secondary);
-  font-weight: 400;
+  font-weight: 500;
 }
 
 .header-actions {
@@ -237,7 +242,7 @@ body {
 
 .card-title {
   font-size: 0.95rem;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--text-primary);
   display: flex;
   align-items: center;
@@ -246,6 +251,7 @@ body {
 
 .card-badge {
   font-size: 0.75rem;
+  font-weight: 500;
   padding: 0.2rem 0.5rem;
   border-radius: var(--radius-sm);
   background: var(--bg-secondary);
@@ -256,35 +262,49 @@ body {
 /* ── Scenario Selector ── */
 .scenario-selector {
   margin-bottom: 2rem;
-  display: flex;
-  gap: 0.5rem;
+  display: inline-flex;
+  gap: 0.25rem;
+  padding: 0.35rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
 }
 
 .scenario-tab {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.85rem;
+  padding: 0.5rem 1rem;
   background: transparent;
   border: 1px solid transparent;
   border-radius: var(--radius-md);
   color: var(--text-secondary);
-  font-size: 0.9rem;
-  font-weight: 400;
+  font-size: 0.85rem;
+  font-weight: 500;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.2s ease;
 }
 
-.scenario-tab:hover {
-  background: var(--bg-hover);
+/* Invisible pseudo-element forces the button to be wide enough for the bold text */
+.scenario-tab::after {
+  content: attr(data-text);
+  font-weight: 600;
+  height: 0;
+  visibility: hidden;
+  overflow: hidden;
+  user-select: none;
+  pointer-events: none;
+}
+
+.scenario-tab:hover:not(.active) {
   color: var(--text-primary);
 }
 
 .scenario-tab.active {
-  background: var(--bg-secondary);
+  background: var(--bg-primary);
   color: var(--text-primary);
-  border-color: var(--border-subtle);
-  font-weight: 500;
+  border-color: var(--border-strong);
+  font-weight: 600;
   box-shadow: var(--shadow-sm);
 }
 
@@ -363,6 +383,7 @@ body {
 
 .meter-label {
   font-size: 0.85rem;
+  font-weight: 500;
   color: var(--text-secondary);
   margin-top: 0.25rem;
 }
@@ -389,7 +410,7 @@ body {
 }
 
 .position-trader {
-  font-weight: 500;
+  font-weight: 600;
   font-size: 0.9rem;
   color: var(--text-primary);
 }
@@ -416,6 +437,7 @@ body {
 .position-detail-value {
   color: var(--text-primary);
   text-align: right;
+  font-weight: 500;
 }
 
 .position-pnl {
@@ -445,6 +467,7 @@ body {
   align-items: center;
   justify-content: space-between;
   font-size: 0.8rem;
+  font-weight: 500;
 }
 
 /* ── Cascade Timeline ── */
@@ -496,7 +519,7 @@ body {
 }
 
 .timeline-title {
-  font-weight: 500;
+  font-weight: 600;
   color: var(--text-primary);
   font-size: 0.9rem;
   margin-bottom: 0.15rem;
@@ -530,7 +553,7 @@ body {
 }
 
 .proof-step-label {
-  font-weight: 500;
+  font-weight: 600;
   color: var(--text-primary);
   font-size: 0.9rem;
 }
@@ -600,6 +623,7 @@ body {
 
 .breaker-stat-label {
   font-size: 0.75rem;
+  font-weight: 500;
   color: var(--text-muted);
   margin-bottom: 0.25rem;
 }
@@ -627,6 +651,7 @@ body {
 
 .stat-label {
   font-size: 0.85rem;
+  font-weight: 500;
   color: var(--text-secondary);
   margin-bottom: 0.25rem;
 }
@@ -681,6 +706,7 @@ body {
 
 .metric-label {
   font-size: 0.85rem;
+  font-weight: 500;
   color: var(--text-secondary);
 }
 

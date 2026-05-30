@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, type Variants } from "framer-motion";
 import {
   ShieldAlert,
   ShieldCheck,
@@ -69,7 +69,7 @@ async function loadScenario(id: string): Promise<ScenarioData> {
 }
 
 // ─── Framer Motion Variants ───
-const staggerContainer = {
+const staggerContainer: Variants = {
   hidden: { opacity: 0 },
   show: {
     opacity: 1,
@@ -77,7 +77,7 @@ const staggerContainer = {
   },
 };
 
-const fadeUp = {
+const fadeUp: Variants = {
   hidden: { opacity: 0, y: 4 }, // Tiny, subtle movement
   show: { opacity: 1, y: 0, transition: { duration: 0.2, ease: "easeOut" } },
 };
@@ -553,6 +553,7 @@ export default function WarRoom() {
             key={s.id}
             className={`scenario-tab ${activeScenario === s.id ? "active" : ""}`}
             onClick={() => switchScenario(s.id)}
+            data-text={s.name}
           >
             {s.name}
           </button>
