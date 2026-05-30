@@ -4,23 +4,29 @@ use crate::types::*;
 
 /// Compute protocol solvency after liquidation cascade.
 ///
-/// Returns: (insurance_fund_remaining, total_bad_debt, risk_score, protocol_solvent)
+/// Returns: (insurance_fund_remaining, total_bad_debt, risk_score, protocol_solvent, total_fees)
 pub fn compute_solvency(
     position_results: &[PositionResult],
     insurance_fund: u64,
     positions: &[SimPosition],
-) -> (u64, u64, u64, bool) {
+) -> (u64, u64, u64, bool, u64) {
     // Sum all liquidation losses (from underwater positions)
     let total_losses: u64 = position_results
         .iter()
         .map(|r| r.liquidation_loss)
         .sum();
 
+    let total_fees: u64 = position_results
+        .iter()
+        .map(|r| r.liquidation_fee_paid)
+        .sum();
+
     // Determine insurance fund usage and bad debt
-    let (insurance_remaining, bad_debt) = if total_losses <= insurance_fund {
-        (insurance_fund - total_losses, 0u64)
+    let insurance_after_fees = insurance_fund.saturating_add(total_fees);
+    let (insurance_remaining, bad_debt) = if total_losses <= insurance_after_fees {
+        (insurance_after_fees - total_losses, 0u64)
     } else {
-        (0u64, total_losses - insurance_fund)
+        (0u64, total_losses - insurance_after_fees)
     };
 
     let protocol_solvent = bad_debt == 0;
@@ -59,7 +65,7 @@ pub fn compute_solvency(
         std::cmp::min(RISK_SCORE_MAX, depletion_ratio as u64)
     };
 
-    (insurance_remaining, bad_debt, risk_score, protocol_solvent)
+    (insurance_remaining, bad_debt, risk_score, protocol_solvent, total_fees)
 }
 
 #[cfg(test)]
@@ -74,6 +80,8 @@ mod tests {
             margin_ratio_bps: 5000,
             is_liquidated: false,
             liquidation_loss: 0,
+            liquidation_fee_paid: 0,
+            liquidated_size: 0,
             effective_collateral: 11000,
         }];
         let positions = vec![SimPosition {
@@ -85,7 +93,7 @@ mod tests {
             is_open: true,
         }];
 
-        let (remaining, bad_debt, risk_score, solvent) =
+        let (remaining, bad_debt, risk_score, solvent, _fees) =
             compute_solvency(&results, 50_000 * SCALE, &positions);
         assert_eq!(remaining, 50_000 * SCALE);
         assert_eq!(bad_debt, 0);
@@ -101,6 +109,8 @@ mod tests {
             margin_ratio_bps: 0,
             is_liquidated: true,
             liquidation_loss: 20_000 * SCALE, // $20k loss
+            liquidation_fee_paid: 0,
+            liquidated_size: 0,
             effective_collateral: -20_000_000_000,
         }];
         let positions = vec![SimPosition {
@@ -112,7 +122,7 @@ mod tests {
             is_open: true,
         }];
 
-        let (remaining, bad_debt, _risk_score, solvent) =
+        let (remaining, bad_debt, _risk_score, solvent, _fees) =
             compute_solvency(&results, 50_000 * SCALE, &positions);
         assert_eq!(remaining, 30_000 * SCALE);
         assert_eq!(bad_debt, 0);
@@ -127,6 +137,8 @@ mod tests {
             margin_ratio_bps: 0,
             is_liquidated: true,
             liquidation_loss: 70_000 * SCALE, // $70k loss > $50k insurance
+            liquidation_fee_paid: 0,
+            liquidated_size: 0,
             effective_collateral: -70_000_000_000,
         }];
         let positions = vec![SimPosition {
@@ -138,7 +150,7 @@ mod tests {
             is_open: true,
         }];
 
-        let (remaining, bad_debt, risk_score, solvent) =
+        let (remaining, bad_debt, risk_score, solvent, _fees) =
             compute_solvency(&results, 50_000 * SCALE, &positions);
         assert_eq!(remaining, 0);
         assert_eq!(bad_debt, 20_000 * SCALE);

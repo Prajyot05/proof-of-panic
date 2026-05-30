@@ -16,6 +16,7 @@ import {
   type SimResult,
   type Snapshot,
 } from "@/lib/types";
+import { fetchLiveState } from "@/lib/rpc";
 
 // ─── Icons (Inline SVGs) ───
 const SunIcon = () => (
@@ -502,6 +503,7 @@ export default function WarRoom() {
   const [scenarioData, setScenarioData] = useState<ScenarioData | null>(null);
   const [loading, setLoading] = useState(true);
   const [animKey, setAnimKey] = useState(0);
+  const [isLiveRpc, setIsLiveRpc] = useState(false);
 
   const { isDark, toggleTheme } = useTheme();
 
@@ -518,8 +520,32 @@ export default function WarRoom() {
   }, []);
 
   useEffect(() => {
-    loadData(activeScenario);
-  }, [activeScenario, loadData]);
+    if (!isLiveRpc) {
+      loadData(activeScenario);
+    }
+  }, [activeScenario, loadData, isLiveRpc]);
+
+  useEffect(() => {
+    if (isLiveRpc) {
+      setLoading(true);
+      const poll = async () => {
+        const liveData = await fetchLiveState();
+        if (liveData) {
+          setScenarioData({
+            id: "live-rpc",
+            name: "Live RPC Feed",
+            description: "Streaming true state directly from Solana validator",
+            snapshot: liveData.snapshot,
+            result: liveData.result
+          });
+          setLoading(false);
+        }
+      };
+      poll();
+      const interval = setInterval(poll, 2000);
+      return () => clearInterval(interval);
+    }
+  }, [isLiveRpc]);
 
   const switchScenario = (id: string) => {
     if (id !== activeScenario) {
@@ -543,6 +569,25 @@ export default function WarRoom() {
           </div>
         </div>
         <div className="header-actions">
+          <button 
+            onClick={() => setIsLiveRpc(!isLiveRpc)} 
+            className={`live-rpc-btn ${isLiveRpc ? "active" : ""}`}
+            style={{ 
+              background: isLiveRpc ? "var(--color-danger)" : "transparent",
+              color: isLiveRpc ? "#fff" : "var(--text-primary)",
+              border: "1px solid var(--border-color)",
+              padding: "6px 12px",
+              borderRadius: "4px",
+              cursor: "pointer",
+              fontWeight: 600,
+              fontSize: "0.875rem",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px"
+            }}
+          >
+            <ActivityIcon /> {isLiveRpc ? "LIVE RPC: ON" : "LIVE RPC: OFF"}
+          </button>
           <div className="header-status">
             <span className={`status-dot ${cbActive ? "danger" : "safe"}`} />
             <span>{cbActive ? "EMERGENCY MODE" : "MONITORING"}</span>
@@ -554,7 +599,7 @@ export default function WarRoom() {
       </header>
 
       {/* Scenario Selector */}
-      <div className="scenario-selector">
+      <div className="scenario-selector" style={{ opacity: isLiveRpc ? 0.5 : 1, pointerEvents: isLiveRpc ? "none" : "auto" }}>
         {SCENARIOS.map((s) => (
           <button
             key={s.id}

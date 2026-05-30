@@ -15,7 +15,13 @@ pub fn handler(ctx: Context<InitializeProtocol>) -> Result<()> {
     global_state.circuit_breaker_active = false;
     global_state.last_proof_slot = 0;
     global_state.last_state_hash = [0u8; 32];
+    global_state.last_public_values_hash = [0u8; 32];
+    global_state.last_proof_schema_version = 0;
     global_state.last_risk_score = 0;
+    global_state.last_submitter = Pubkey::default();
+    global_state.last_reward_lamports = 0;
+    global_state.last_risk_update_slot = 0;
+    global_state.governance_timelock_slots = DEFAULT_GOVERNANCE_TIMELOCK_SLOTS;
     global_state.max_leverage = DEFAULT_MAX_LEVERAGE;
     global_state.bump = ctx.bumps.global_state;
 
@@ -23,6 +29,7 @@ pub fn handler(ctx: Context<InitializeProtocol>) -> Result<()> {
     let risk_config = &mut ctx.accounts.risk_config;
     risk_config.maintenance_margin_bps = DEFAULT_MAINTENANCE_MARGIN_BPS;
     risk_config.liquidation_fee_bps = DEFAULT_LIQUIDATION_FEE_BPS;
+    risk_config.liquidation_target_margin_bps = DEFAULT_LIQUIDATION_TARGET_MARGIN_BPS;
     risk_config.max_leverage = DEFAULT_MAX_LEVERAGE;
     risk_config.insurance_fund_target = DEFAULT_INSURANCE_FUND;
     risk_config.circuit_breaker_threshold = DEFAULT_CB_THRESHOLD;

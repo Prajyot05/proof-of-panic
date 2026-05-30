@@ -21,6 +21,8 @@ pub fn evaluate_positions(
             margin_ratio_bps: 0,
             is_liquidated: false,
             liquidation_loss: 0,
+            liquidation_fee_paid: 0,
+            liquidated_size: 0,
             effective_collateral: 0,
         };
         positions.len()
@@ -63,15 +65,28 @@ pub fn evaluate_positions(
                 results[i].is_liquidated = true;
                 cascade_active = true;
 
-                // Close 50% of the position for partial liquidation
-                let mut liquidate_size = pos.size / 2;
-                
-                // If severely underwater, liquidate fully
-                if effective_collateral <= 0 || margin_ratio_bps < risk_config.maintenance_margin_bps / 2 {
-                    liquidate_size = pos.size;
+                let target_margin_bps = std::cmp::max(
+                    risk_config.maintenance_margin_bps,
+                    risk_config.liquidation_target_margin_bps,
+                );
+
+                let mut liquidate_size = pos.size;
+                if effective_collateral > 0 {
+                    let desired_size = (effective_collateral as u128)
+                        .checked_mul(BPS_DENOMINATOR as u128)
+                        .unwrap_or(0)
+                        / target_margin_bps as u128;
+                    if desired_size < pos.size as u128 {
+                        liquidate_size = pos.size - desired_size as u64;
+                    }
+                }
+
+                if liquidate_size == 0 {
+                    continue;
                 }
 
                 total_liquidated_size_this_round += liquidate_size;
+                results[i].liquidated_size = liquidate_size;
 
                 // Deduct liquidation fee
                 let fee = liquidate_size
@@ -79,23 +94,36 @@ pub fn evaluate_positions(
                     .unwrap_or(0)
                     / BPS_DENOMINATOR;
 
-                if effective_collateral < 0 {
-                    results[i].liquidation_loss += effective_collateral.unsigned_abs() + fee;
+                results[i].liquidation_fee_paid = fee;
+
+                let fee_shortfall = if pos.collateral >= fee {
+                    pos.collateral -= fee;
+                    0u64
                 } else {
-                    let remaining = effective_collateral as u64;
-                    if fee > remaining {
-                        results[i].liquidation_loss += fee - remaining;
-                    }
+                    let shortfall = fee - pos.collateral;
+                    pos.collateral = 0;
+                    shortfall
+                };
+
+                if effective_collateral < 0 {
+                    results[i].liquidation_loss += effective_collateral.unsigned_abs() + fee_shortfall;
+                } else if fee_shortfall > 0 {
+                    results[i].liquidation_loss += fee_shortfall;
                 }
 
                 // Actually reduce position size
+                let original_size = pos.size;
                 pos.size -= liquidate_size;
                 // Reduce collateral proportionally
                 if pos.size == 0 {
                     pos.is_open = false;
                     pos.collateral = 0;
                 } else {
-                    pos.collateral = pos.collateral / 2; // Rough approximation for partial
+                    let new_collateral = (pos.collateral as u128)
+                        .checked_mul(pos.size as u128)
+                        .unwrap_or(0)
+                        / original_size as u128;
+                    pos.collateral = new_collateral as u64;
                 }
             }
         }

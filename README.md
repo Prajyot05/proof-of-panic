@@ -49,14 +49,14 @@ A compromised simulator could report "protocol is safe" when it's actually insol
 
 ## War Room Dashboard
 
-The project includes a real-time visualization dashboard that animates the entire liquidation cascade:
+The project includes a scenario playback visualization dashboard that animates the entire liquidation cascade:
 
 - **Protocol health meter** — Radial gauge animating from green to red
 - **Position cards** — Each trader's position with live health bars that deplete as margin erodes
 - **Liquidation cascade timeline** — Step-by-step animated sequence of positions collapsing
 - **Circuit breaker overlay** — Dramatic activation when the protocol enters emergency mode
 - **ZK proof verification panel** — Visual pipeline from snapshot → proof → on-chain verification
-- **5 adversarial scenarios** — Switch between different market conditions in real-time
+- **5 adversarial scenarios** — Switch between different market conditions directly in the dashboard
 
 ```bash
 cd app && npm run dev    # Opens at http://localhost:3000

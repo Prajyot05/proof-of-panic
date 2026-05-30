@@ -29,6 +29,9 @@ pub enum PanicError {
     #[msg("Proof is too old to be submitted")]
     ProofTooOld,
 
+    #[msg("Proof already submitted this slot")]
+    ProofTooFresh,
+
     #[msg("Invalid verifier program: does not match expected Sunspot verifier ID")]
     InvalidVerifierProgram,
 
@@ -37,4 +40,10 @@ pub enum PanicError {
 
     #[msg("Invalid or stale oracle price")]
     InvalidOracle,
+
+    #[msg("Proof interval too short for incentives")]
+    ProofIntervalTooShort,
+
+    #[msg("Reward vault has insufficient balance")]
+    RewardVaultInsufficient,
 }

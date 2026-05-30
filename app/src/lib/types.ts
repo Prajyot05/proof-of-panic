@@ -7,6 +7,8 @@ export interface PositionResult {
   margin_ratio_bps: number;
   is_liquidated: boolean;
   liquidation_loss: number;
+  liquidation_fee_paid: number;
+  liquidated_size: number;
   effective_collateral: number;
 }
 
@@ -14,9 +16,11 @@ export interface SimResult {
   pre_shock_price: number;
   post_shock_price: number;
   shock_bps: number;
+  shock_direction_up: boolean;
   position_results: PositionResult[];
   num_liquidated: number;
   total_losses: number;
+  total_fees_collected: number;
   insurance_fund_remaining: number;
   total_bad_debt: number;
   risk_score: number;
@@ -36,6 +40,7 @@ export interface SimPosition {
 export interface SimRiskConfig {
   maintenance_margin_bps: number;
   liquidation_fee_bps: number;
+  liquidation_target_margin_bps: number;
   circuit_breaker_threshold: number;
   shock_magnitude_bps: number;
 }

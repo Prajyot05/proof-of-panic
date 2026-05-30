@@ -9,6 +9,7 @@ pub fn handler(
     ctx: Context<UpdateRiskParams>,
     new_max_leverage: Option<u64>,
     new_maintenance_margin_bps: Option<u64>,
+    new_liquidation_target_margin_bps: Option<u64>,
     new_circuit_breaker_threshold: Option<u64>,
     reset_circuit_breaker: bool,
 ) -> Result<()> {
@@ -31,6 +32,16 @@ pub fn handler(
         require!(margin > 0 && margin <= BPS_DENOMINATOR, PanicError::InvalidRiskParam);
         risk_config.maintenance_margin_bps = margin;
         msg!("Maintenance margin updated to {} bps", margin);
+    }
+
+    if let Some(target_margin) = new_liquidation_target_margin_bps {
+        require!(
+            target_margin >= risk_config.maintenance_margin_bps
+                && target_margin <= BPS_DENOMINATOR,
+            PanicError::InvalidRiskParam
+        );
+        risk_config.liquidation_target_margin_bps = target_margin;
+        msg!("Liquidation target margin updated to {} bps", target_margin);
     }
 
     if let Some(threshold) = new_circuit_breaker_threshold {

@@ -1,0 +1,1656 @@
+{
+  "address": "9YGU7h7TCskUQ2BkZfSVCkb66NzJPES5m5QrW8vUw6hE",
+  "metadata": {
+    "name": "proof_of_panic",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "A ZK-verified adversarial risk engine for Solana perpetual protocols"
+  },
+  "instructions": [
+    {
+      "name": "fund_reward_vault",
+      "docs": [
+        "Fund reward vault with lamports."
+      ],
+      "discriminator": [
+        9,
+        198,
+        202,
+        115,
+        106,
+        247,
+        227,
+        119
+      ],
+      "accounts": [
+        {
+          "name": "funder",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "reward_vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  101,
+                  119,
+                  97,
+                  114,
+                  100,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "initialize_incentives",
+      "docs": [
+        "Initialize incentives and reward vault."
+      ],
+      "discriminator": [
+        196,
+        105,
+        47,
+        41,
+        23,
+        48,
+        79,
+        39
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "incentives_config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  105,
+                  110,
+                  99,
+                  101,
+                  110,
+                  116,
+                  105,
+                  118,
+                  101,
+                  115,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "reward_vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  101,
+                  119,
+                  97,
+                  114,
+                  100,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "reward_lamports",
+          "type": "u64"
+        },
+        {
+          "name": "min_proof_interval_slots",
+          "type": "u64"
+        },
+        {
+          "name": "enabled",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "initialize_position_registry",
+      "docs": [
+        "Initialize the scalable position registry."
+      ],
+      "discriminator": [
+        20,
+        230,
+        253,
+        29,
+        170,
+        239,
+        166,
+        131
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "position_registry",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  115,
+                  105,
+                  116,
+                  105,
+                  111,
+                  110,
+                  95,
+                  114,
+                  101,
+                  103,
+                  105,
+                  115,
+                  116,
+                  114,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "initialize_positions",
+      "docs": [
+        "Populate the PositionBook with demo positions.",
+        "Creates 5 deterministic positions with varying leverage for the stress test."
+      ],
+      "discriminator": [
+        119,
+        236,
+        0,
+        94,
+        117,
+        129,
+        143,
+        233
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "global_state",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  103,
+                  108,
+                  111,
+                  98,
+                  97,
+                  108,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "position_book",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  115,
+                  105,
+                  116,
+                  105,
+                  111,
+                  110,
+                  95,
+                  98,
+                  111,
+                  111,
+                  107
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "initialize_protocol",
+      "docs": [
+        "Initialize the protocol with default parameters.",
+        "Creates GlobalState, RiskConfig, and PositionBook accounts."
+      ],
+      "discriminator": [
+        188,
+        233,
+        252,
+        106,
+        134,
+        146,
+        202,
+        91
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "global_state",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  103,
+                  108,
+                  111,
+                  98,
+                  97,
+                  108,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "risk_config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  105,
+                  115,
+                  107,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "position_book",
+          "docs": [
+            "The PositionBook uses zero-copy layout.",
+            "We create the account externally (client-side) and use `zero` to",
+            "verify it's freshly initialized with the correct discriminator."
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  115,
+                  105,
+                  116,
+                  105,
+                  111,
+                  110,
+                  95,
+                  98,
+                  111,
+                  111,
+                  107
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "refresh_oracle_price",
+      "docs": [
+        "Refresh the stored oracle price from a Pyth feed."
+      ],
+      "discriminator": [
+        105,
+        173,
+        104,
+        45,
+        225,
+        142,
+        101,
+        72
+      ],
+      "accounts": [
+        {
+          "name": "global_state",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  103,
+                  108,
+                  111,
+                  98,
+                  97,
+                  108,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "pyth_oracle"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "submit_proof_and_verify",
+      "docs": [
+        "Submit a ZK proof of a stress-test simulation and verify it.",
+        "If verified and risk threshold exceeded, activates the circuit breaker."
+      ],
+      "discriminator": [
+        227,
+        227,
+        219,
+        143,
+        60,
+        191,
+        134,
+        232
+      ],
+      "accounts": [
+        {
+          "name": "submitter",
+          "signer": true
+        },
+        {
+          "name": "global_state",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  103,
+                  108,
+                  111,
+                  98,
+                  97,
+                  108,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "risk_config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  105,
+                  115,
+                  107,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "position_book",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  115,
+                  105,
+                  116,
+                  105,
+                  111,
+                  110,
+                  95,
+                  98,
+                  111,
+                  111,
+                  107
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "sp1_verifier",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "pyth_oracle",
+          "docs": [
+            "Optional Pyth oracle price feed account."
+          ],
+          "optional": true
+        },
+        {
+          "name": "incentives_config",
+          "optional": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  105,
+                  110,
+                  99,
+                  101,
+                  110,
+                  116,
+                  105,
+                  118,
+                  101,
+                  115,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "reward_vault",
+          "writable": true,
+          "optional": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  101,
+                  119,
+                  97,
+                  114,
+                  100,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "proof_bytes",
+          "type": "bytes"
+        },
+        {
+          "name": "public_values_bytes",
+          "type": "bytes"
+        },
+        {
+          "name": "expected_shock_direction_up",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "update_incentives",
+      "docs": [
+        "Update incentives configuration."
+      ],
+      "discriminator": [
+        51,
+        204,
+        56,
+        209,
+        152,
+        107,
+        3,
+        153
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "incentives_config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  105,
+                  110,
+                  99,
+                  101,
+                  110,
+                  116,
+                  105,
+                  118,
+                  101,
+                  115,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "reward_lamports",
+          "type": {
+            "option": "u64"
+          }
+        },
+        {
+          "name": "min_proof_interval_slots",
+          "type": {
+            "option": "u64"
+          }
+        },
+        {
+          "name": "enabled",
+          "type": {
+            "option": "bool"
+          }
+        }
+      ]
+    },
+    {
+      "name": "update_position_root",
+      "docs": [
+        "Update the committed position root (for compressed state workflows)."
+      ],
+      "discriminator": [
+        141,
+        54,
+        237,
+        42,
+        165,
+        173,
+        28,
+        17
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "position_registry",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  115,
+                  105,
+                  116,
+                  105,
+                  111,
+                  110,
+                  95,
+                  114,
+                  101,
+                  103,
+                  105,
+                  115,
+                  116,
+                  114,
+                  121
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "position_root",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "position_count",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "update_risk_params",
+      "docs": [
+        "Update risk parameters or reset the circuit breaker.",
+        "Admin-only instruction for demo replay."
+      ],
+      "discriminator": [
+        106,
+        101,
+        226,
+        66,
+        22,
+        113,
+        174,
+        212
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "global_state",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  103,
+                  108,
+                  111,
+                  98,
+                  97,
+                  108,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "risk_config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  105,
+                  115,
+                  107,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "new_max_leverage",
+          "type": {
+            "option": "u64"
+          }
+        },
+        {
+          "name": "new_maintenance_margin_bps",
+          "type": {
+            "option": "u64"
+          }
+        },
+        {
+          "name": "new_liquidation_target_margin_bps",
+          "type": {
+            "option": "u64"
+          }
+        },
+        {
+          "name": "new_circuit_breaker_threshold",
+          "type": {
+            "option": "u64"
+          }
+        },
+        {
+          "name": "reset_circuit_breaker",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "upsert_position",
+      "docs": [
+        "Create or update a per-position account."
+      ],
+      "discriminator": [
+        122,
+        233,
+        208,
+        208,
+        119,
+        176,
+        106,
+        203
+      ],
+      "accounts": [
+        {
+          "name": "owner",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "position_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  115,
+                  105,
+                  116,
+                  105,
+                  111,
+                  110,
+                  95,
+                  97,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "owner"
+              },
+              {
+                "kind": "arg",
+                "path": "position_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "position_id",
+          "type": "u64"
+        },
+        {
+          "name": "collateral",
+          "type": "u64"
+        },
+        {
+          "name": "size",
+          "type": "u64"
+        },
+        {
+          "name": "entry_price",
+          "type": "u64"
+        },
+        {
+          "name": "is_long",
+          "type": "bool"
+        },
+        {
+          "name": "is_open",
+          "type": "bool"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "GlobalState",
+      "discriminator": [
+        163,
+        46,
+        74,
+        168,
+        216,
+        123,
+        133,
+        98
+      ]
+    },
+    {
+      "name": "IncentivesConfig",
+      "discriminator": [
+        169,
+        173,
+        207,
+        226,
+        26,
+        238,
+        68,
+        125
+      ]
+    },
+    {
+      "name": "PositionAccount",
+      "discriminator": [
+        60,
+        125,
+        250,
+        193,
+        181,
+        109,
+        238,
+        86
+      ]
+    },
+    {
+      "name": "PositionBook",
+      "discriminator": [
+        122,
+        76,
+        129,
+        108,
+        60,
+        67,
+        108,
+        157
+      ]
+    },
+    {
+      "name": "PositionRegistry",
+      "discriminator": [
+        82,
+        58,
+        183,
+        208,
+        57,
+        172,
+        38,
+        224
+      ]
+    },
+    {
+      "name": "RiskConfig",
+      "discriminator": [
+        201,
+        119,
+        245,
+        244,
+        40,
+        27,
+        0,
+        31
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "Unauthorized",
+      "msg": "Unauthorized: signer is not the protocol authority"
+    },
+    {
+      "code": 6001,
+      "name": "PositionsAlreadyInitialized",
+      "msg": "Position book is already initialized with positions"
+    },
+    {
+      "code": 6002,
+      "name": "StateHashMismatch",
+      "msg": "State hash mismatch: proof does not correspond to current on-chain state"
+    },
+    {
+      "code": 6003,
+      "name": "ProofVerificationFailed",
+      "msg": "Proof verification failed"
+    },
+    {
+      "code": 6004,
+      "name": "CircuitBreakerAlreadyActive",
+      "msg": "Circuit breaker is already active"
+    },
+    {
+      "code": 6005,
+      "name": "InvalidRiskParam",
+      "msg": "Global risk parameter exceeds bounds"
+    },
+    {
+      "code": 6006,
+      "name": "ArithmeticOverflow",
+      "msg": "Arithmetic overflow in computation"
+    },
+    {
+      "code": 6007,
+      "name": "ProofTooStale",
+      "msg": "Proof is too stale: exceeds maximum age in slots"
+    },
+    {
+      "code": 6008,
+      "name": "ProofTooOld",
+      "msg": "Proof is too old to be submitted"
+    },
+    {
+      "code": 6009,
+      "name": "ProofTooFresh",
+      "msg": "Proof already submitted this slot"
+    },
+    {
+      "code": 6010,
+      "name": "InvalidVerifierProgram",
+      "msg": "Invalid verifier program: does not match expected Sunspot verifier ID"
+    },
+    {
+      "code": 6011,
+      "name": "TimelockNotExpired",
+      "msg": "Circuit breaker reset timelock has not expired"
+    },
+    {
+      "code": 6012,
+      "name": "InvalidOracle",
+      "msg": "Invalid or stale oracle price"
+    },
+    {
+      "code": 6013,
+      "name": "ProofIntervalTooShort",
+      "msg": "Proof interval too short for incentives"
+    },
+    {
+      "code": 6014,
+      "name": "RewardVaultInsufficient",
+      "msg": "Reward vault has insufficient balance"
+    }
+  ],
+  "types": [
+    {
+      "name": "GlobalState",
+      "docs": [
+        "Singleton protocol-level state.",
+        "Tracks overall protocol health, circuit breaker status,",
+        "and the latest verified state commitment.",
+        "",
+        "PDA: seeds = [b\"global_state\"]",
+        "Layout: Standard Borsh (small account, ~120 bytes)"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "docs": [
+              "Protocol admin authority (demo keypair)"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "oracle_price",
+            "docs": [
+              "Current SOL price in microdollars (e.g., 150_000_000 = $150.00)"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "total_positions",
+            "docs": [
+              "Number of active positions in the PositionBook"
+            ],
+            "type": "u8"
+          },
+          {
+            "name": "insurance_fund",
+            "docs": [
+              "Insurance fund balance in microdollars"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "circuit_breaker_active",
+            "docs": [
+              "True if the circuit breaker has been triggered"
+            ],
+            "type": "bool"
+          },
+          {
+            "name": "last_proof_slot",
+            "docs": [
+              "Slot at which the last proof was successfully verified"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "last_state_hash",
+            "docs": [
+              "SHA-256 hash of the position array at the time of proof"
+            ],
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "last_public_values_hash",
+            "docs": [
+              "SHA-256 hash of the last public values payload"
+            ],
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "last_proof_schema_version",
+            "docs": [
+              "Schema version of the last accepted proof"
+            ],
+            "type": "u32"
+          },
+          {
+            "name": "last_risk_score",
+            "docs": [
+              "Risk score from the last verified simulation (0 to 1,000,000)"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "last_submitter",
+            "docs": [
+              "Last proof submitter"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "last_reward_lamports",
+            "docs": [
+              "Last reward paid in lamports"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "last_risk_update_slot",
+            "docs": [
+              "Slot when risk parameters were last updated"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "governance_timelock_slots",
+            "docs": [
+              "Governance timelock for risk updates"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "max_leverage",
+            "docs": [
+              "Current maximum allowed leverage (in micros, e.g., 10_000_000 = 10x)"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "circuit_breaker_activation_slot",
+            "docs": [
+              "Slot when circuit breaker was activated (for reset timelock)"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "docs": [
+              "PDA bump seed"
+            ],
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "IncentivesConfig",
+      "docs": [
+        "Incentives configuration for proof submissions.",
+        "",
+        "PDA seeds: [b\"incentives_config\"]"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "docs": [
+              "Authority allowed to update incentives"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "reward_lamports",
+            "docs": [
+              "Reward paid per accepted proof (lamports)"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "min_proof_interval_slots",
+            "docs": [
+              "Minimum slots between rewarded proofs"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "enabled",
+            "docs": [
+              "Whether incentives are enabled"
+            ],
+            "type": "bool"
+          },
+          {
+            "name": "reward_vault_bump",
+            "docs": [
+              "Reward vault bump"
+            ],
+            "type": "u8"
+          },
+          {
+            "name": "bump",
+            "docs": [
+              "PDA bump seed"
+            ],
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Position",
+      "docs": [
+        "A single leveraged position in the simplified perpetuals model.",
+        "",
+        "Uses `#[repr(C)]` for deterministic memory layout compatible with",
+        "bytemuck zero-copy deserialization. All monetary values in microdollars.",
+        "",
+        "Size: 32 + 8 + 8 + 8 + 1 + 1 + 6 = 64 bytes per position"
+      ],
+      "serialization": "bytemuck",
+      "repr": {
+        "kind": "c"
+      },
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "owner",
+            "docs": [
+              "Owner pubkey as raw bytes (Pubkey isn't Pod-compatible)"
+            ],
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "collateral",
+            "docs": [
+              "Collateral deposited, in microdollars"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "size",
+            "docs": [
+              "Notional position size, in microdollars"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "entry_price",
+            "docs": [
+              "Entry price, in microdollars"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "is_long",
+            "docs": [
+              "1 = long, 0 = short"
+            ],
+            "type": "u8"
+          },
+          {
+            "name": "is_open",
+            "docs": [
+              "1 = open, 0 = closed/liquidated"
+            ],
+            "type": "u8"
+          },
+          {
+            "name": "_padding",
+            "docs": [
+              "Padding for 8-byte alignment"
+            ],
+            "type": {
+              "array": [
+                "u8",
+                6
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "PositionAccount",
+      "docs": [
+        "Per-position account for scalable position storage.",
+        "",
+        "PDA seeds: [b\"position_account\", owner, position_id]"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "owner",
+            "docs": [
+              "Position owner"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "position_id",
+            "docs": [
+              "Position identifier scoped to owner"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "collateral",
+            "docs": [
+              "Collateral in microdollars"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "size",
+            "docs": [
+              "Notional size in microdollars"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "entry_price",
+            "docs": [
+              "Entry price in microdollars"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "is_long",
+            "docs": [
+              "1 = long, 0 = short"
+            ],
+            "type": "u8"
+          },
+          {
+            "name": "is_open",
+            "docs": [
+              "1 = open, 0 = closed"
+            ],
+            "type": "u8"
+          },
+          {
+            "name": "bump",
+            "docs": [
+              "PDA bump seed"
+            ],
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PositionBook",
+      "docs": [
+        "The full position book — a zero-copy account containing a fixed-size",
+        "array of positions. Using a single account instead of per-user accounts",
+        "to simplify snapshot serialization, hash commitment, and the Noir circuit.",
+        "",
+        "PDA: seeds = [b\"position_book\"]",
+        "Layout: Zero-copy via bytemuck",
+        "",
+        "Total size: 8 (discriminator) + 1 (count) + 7 (padding) + 8 * 64 (positions)",
+        "= 8 + 8 + 512 = 528 bytes"
+      ],
+      "serialization": "bytemuck",
+      "repr": {
+        "kind": "c"
+      },
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "count",
+            "docs": [
+              "Number of active positions"
+            ],
+            "type": "u8"
+          },
+          {
+            "name": "_padding",
+            "docs": [
+              "Alignment padding"
+            ],
+            "type": {
+              "array": [
+                "u8",
+                7
+              ]
+            }
+          },
+          {
+            "name": "positions",
+            "docs": [
+              "Fixed-size position array"
+            ],
+            "type": {
+              "array": [
+                {
+                  "defined": {
+                    "name": "Position"
+                  }
+                },
+                8
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "PositionRegistry",
+      "docs": [
+        "Registry tracking the committed root of all position accounts.",
+        "",
+        "PDA seeds: [b\"position_registry\"]"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "docs": [
+              "Authority allowed to update the registry"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "position_root",
+            "docs": [
+              "Commitment root for all positions"
+            ],
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "position_count",
+            "docs": [
+              "Total positions included in the root"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "last_root_slot",
+            "docs": [
+              "Slot when the root was last updated"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "docs": [
+              "PDA bump seed"
+            ],
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "RiskConfig",
+      "docs": [
+        "Protocol risk configuration parameters.",
+        "Separated from GlobalState for clean account separation",
+        "and independent updateability.",
+        "",
+        "PDA: seeds = [b\"risk_config\"]",
+        "Layout: Standard Borsh (~60 bytes)"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "maintenance_margin_bps",
+            "docs": [
+              "Maintenance margin in basis points (e.g., 500 = 5%)"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "liquidation_fee_bps",
+            "docs": [
+              "Liquidation fee in basis points (e.g., 250 = 2.5%)"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "liquidation_target_margin_bps",
+            "docs": [
+              "Target margin after partial liquidation in basis points"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "max_leverage",
+            "docs": [
+              "Maximum leverage allowed (in micros, e.g., 10_000_000 = 10x)"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "insurance_fund_target",
+            "docs": [
+              "Target insurance fund size in microdollars"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "circuit_breaker_threshold",
+            "docs": [
+              "Risk score above which circuit breaker activates (0 to 1,000,000)"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "shock_magnitude_bps",
+            "docs": [
+              "Shock magnitude to simulate in basis points (e.g., 3000 = 30%)"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "docs": [
+              "PDA bump seed"
+            ],
+            "type": "u8"
+          }
+        ]
+      }
+    }
+  ]
+}

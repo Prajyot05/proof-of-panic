@@ -23,6 +23,10 @@ const PROOF_PATH = resolve(
   __dirname,
   "../outputs/sp1/proof.bin"
 );
+const PUBLIC_VALUES_PATH = resolve(
+  __dirname,
+  "../outputs/sp1/public_values.bin"
+);
 
 async function main() {
   const connection = new web3.Connection("http://localhost:8899", "confirmed");
@@ -51,6 +55,7 @@ async function main() {
     [Buffer.from("position_book")],
     programId
   );
+  const pythPriceAccount = process.env.PYTH_PRICE_ACCOUNT;
 
   // Read simulation results
   if (!existsSync(RESULTS_PATH)) {
@@ -61,7 +66,7 @@ async function main() {
 
   // Read SP1 proof bytes
   let proofBytes = Buffer.alloc(0);
-  let publicInputs = Buffer.alloc(0); // Mock, not used by our new test-mock-verify SP1 setup directly since we removed it from handler args, wait, no, the handler signature still has it!
+  let publicInputs = Buffer.alloc(0);
 
   // Check the handler signature we set in programs/proof-of-panic/src/lib.rs:
   // pub fn submit_proof_and_verify(
@@ -89,31 +94,19 @@ async function main() {
     proofBytes = Buffer.alloc(388);
   }
 
+  if (!existsSync(PUBLIC_VALUES_PATH)) {
+    console.error("❌ public_values.bin not found. Run the prover first: ./scripts/5-prove.sh");
+    process.exit(1);
+  }
+
+  publicInputs = readFileSync(PUBLIC_VALUES_PATH);
+
   // Extract values from results
   const riskScore = results.risk_score;
   const badDebt = results.total_bad_debt;
   const numLiquidated = results.num_liquidated;
   const stateHash: number[] = results.state_hash;
-  const preShockPrice = 150000000; // From snapshot oracle price $150
-  
-  // PublicValuesStruct is:
-  // state_hash: [u8; 32]
-  // pre_shock_price: u64
-  // bad_debt: u64
-  // risk_score: u64
-  // num_liquidated: u64
-  // We can serialize this manually using BN
-  const preState = await (program.account as any).globalState.fetch(globalStatePda);
-  const onChainStateHash = preState.lastStateHash as number[];
-
-  const pubValuesBuf = Buffer.alloc(32 + 8 + 8 + 8 + 8);
-  pubValuesBuf.set(onChainStateHash, 0);
-  new anchor.BN(preShockPrice).toArrayLike(Buffer, "le", 8).copy(pubValuesBuf, 32);
-  new anchor.BN(badDebt).toArrayLike(Buffer, "le", 8).copy(pubValuesBuf, 40);
-  new anchor.BN(riskScore).toArrayLike(Buffer, "le", 8).copy(pubValuesBuf, 48);
-  new anchor.BN(numLiquidated).toArrayLike(Buffer, "le", 8).copy(pubValuesBuf, 56);
-  
-  publicInputs = pubValuesBuf;
+  const shockDirectionUp = Boolean(results.shock_direction_up);
 
   console.log("");
   console.log("Submitting proof on-chain...");
@@ -133,18 +126,23 @@ async function main() {
       units: 500_000,
     });
 
+    const accounts: Record<string, web3.PublicKey> = {
+      submitter: wallet.publicKey,
+      globalState: globalStatePda,
+      riskConfig: riskConfigPda,
+      positionBook: positionBookPda,
+    };
+    if (pythPriceAccount) {
+      accounts.pythOracle = new web3.PublicKey(pythPriceAccount);
+    }
+
     const tx = await program.methods
       .submitProofAndVerify(
         Buffer.from(proofBytes),
-        Buffer.from(publicInputs)
+        Buffer.from(publicInputs),
+        shockDirectionUp
       )
-      .accounts({
-        authority: wallet.publicKey,
-        globalState: globalStatePda,
-        riskConfig: riskConfigPda,
-        positionBook: positionBookPda,
-        pythOracle: programId,
-      })
+      .accounts(accounts)
       .preInstructions([computeIx])
       .signers([wallet])
       .rpc();

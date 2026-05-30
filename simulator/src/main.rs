@@ -170,7 +170,7 @@ fn main() {
     let num_liquidated = position_results.iter().filter(|r| r.is_liquidated).count() as u64;
     let total_losses: u64 = position_results.iter().map(|r| r.liquidation_loss).sum();
 
-    let (insurance_remaining, bad_debt, risk_score, protocol_solvent) =
+    let (insurance_remaining, bad_debt, risk_score, protocol_solvent, total_fees) =
         compute_solvency(&position_results, snapshot.insurance_fund, &snapshot.positions);
 
     println!();
@@ -213,9 +213,11 @@ fn main() {
         pre_shock_price: snapshot.oracle_price,
         post_shock_price: final_post_shock_price,
         shock_bps,
+        shock_direction_up,
         position_results,
         num_liquidated,
         total_losses,
+        total_fees_collected: total_fees,
         insurance_fund_remaining: insurance_remaining,
         total_bad_debt: bad_debt,
         risk_score,

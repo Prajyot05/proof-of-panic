@@ -44,6 +44,7 @@ fn default_risk_config(shock_bps: u64) -> SimRiskConfig {
     SimRiskConfig {
         maintenance_margin_bps: 500,
         liquidation_fee_bps: 250,
+        liquidation_target_margin_bps: 800,
         circuit_breaker_threshold: 700_000,
         shock_magnitude_bps: shock_bps,
     }

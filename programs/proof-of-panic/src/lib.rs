@@ -34,18 +34,95 @@ pub mod proof_of_panic {
         instructions::init_positions::handler(ctx)
     }
 
+    /// Initialize the scalable position registry.
+    pub fn initialize_position_registry(ctx: Context<InitPositionRegistry>) -> Result<()> {
+        instructions::init_position_registry::handler(ctx)
+    }
+
+    /// Initialize incentives and reward vault.
+    pub fn initialize_incentives(
+        ctx: Context<InitIncentives>,
+        reward_lamports: u64,
+        min_proof_interval_slots: u64,
+        enabled: bool,
+    ) -> Result<()> {
+        instructions::init_incentives::handler(
+            ctx,
+            reward_lamports,
+            min_proof_interval_slots,
+            enabled,
+        )
+    }
+
+    /// Update incentives configuration.
+    pub fn update_incentives(
+        ctx: Context<UpdateIncentives>,
+        reward_lamports: Option<u64>,
+        min_proof_interval_slots: Option<u64>,
+        enabled: Option<bool>,
+    ) -> Result<()> {
+        instructions::update_incentives::handler(
+            ctx,
+            reward_lamports,
+            min_proof_interval_slots,
+            enabled,
+        )
+    }
+
+    /// Fund reward vault with lamports.
+    pub fn fund_reward_vault(ctx: Context<FundRewardVault>, amount: u64) -> Result<()> {
+        instructions::fund_reward_vault::handler(ctx, amount)
+    }
+
+    /// Create or update a per-position account.
+    pub fn upsert_position(
+        ctx: Context<UpsertPosition>,
+        position_id: u64,
+        collateral: u64,
+        size: u64,
+        entry_price: u64,
+        is_long: bool,
+        is_open: bool,
+    ) -> Result<()> {
+        instructions::upsert_position::handler(
+            ctx,
+            position_id,
+            collateral,
+            size,
+            entry_price,
+            is_long,
+            is_open,
+        )
+    }
+
+    /// Update the committed position root (for compressed state workflows).
+    pub fn update_position_root(
+        ctx: Context<UpdatePositionRoot>,
+        position_root: [u8; 32],
+        position_count: u64,
+    ) -> Result<()> {
+        instructions::update_position_root::handler(ctx, position_root, position_count)
+    }
+
     /// Submit a ZK proof of a stress-test simulation and verify it.
     /// If verified and risk threshold exceeded, activates the circuit breaker.
     pub fn submit_proof_and_verify(
         ctx: Context<SubmitProofAndVerify>,
         proof_bytes: Vec<u8>,
         public_values_bytes: Vec<u8>,
+        expected_shock_direction_up: bool,
     ) -> Result<()> {
         instructions::submit_proof::handler(
             ctx,
             proof_bytes,
             public_values_bytes,
+            expected_shock_direction_up,
         )
+    }
+
+    /// Refresh the stored oracle price from a Pyth feed.
+    pub fn refresh_oracle_price(ctx: Context<RefreshOraclePrice>) -> Result<()> {
+        instructions::refresh_oracle::handler(ctx)
     }
 
     /// Update risk parameters or reset the circuit breaker.
@@ -54,6 +131,7 @@ pub mod proof_of_panic {
         ctx: Context<UpdateRiskParams>,
         new_max_leverage: Option<u64>,
         new_maintenance_margin_bps: Option<u64>,
+        new_liquidation_target_margin_bps: Option<u64>,
         new_circuit_breaker_threshold: Option<u64>,
         reset_circuit_breaker: bool,
     ) -> Result<()> {
@@ -61,6 +139,7 @@ pub mod proof_of_panic {
             ctx,
             new_max_leverage,
             new_maintenance_margin_bps,
+            new_liquidation_target_margin_bps,
             new_circuit_breaker_threshold,
             reset_circuit_breaker,
         )

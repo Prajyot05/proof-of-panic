@@ -15,6 +15,9 @@ pub struct RiskConfig {
     /// Liquidation fee in basis points (e.g., 250 = 2.5%)
     pub liquidation_fee_bps: u64,
 
+    /// Target margin after partial liquidation in basis points
+    pub liquidation_target_margin_bps: u64,
+
     /// Maximum leverage allowed (in micros, e.g., 10_000_000 = 10x)
     pub max_leverage: u64,
 
@@ -35,6 +38,7 @@ impl RiskConfig {
     pub const SIZE: usize = 8  // discriminator
         + 8   // maintenance_margin_bps
         + 8   // liquidation_fee_bps
+        + 8   // liquidation_target_margin_bps
         + 8   // max_leverage
         + 8   // insurance_fund_target
         + 8   // circuit_breaker_threshold

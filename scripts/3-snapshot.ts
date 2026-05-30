@@ -45,6 +45,17 @@ async function main() {
     programId
   );
 
+  const pythPriceAccount = process.env.PYTH_PRICE_ACCOUNT;
+  if (pythPriceAccount) {
+    await program.methods
+      .refreshOraclePrice()
+      .accounts({
+        globalState: globalStatePda,
+        pythOracle: new web3.PublicKey(pythPriceAccount),
+      })
+      .rpc();
+  }
+
   // Fetch accounts
   const globalState = await (program.account as any).globalState.fetch(globalStatePda);
   const riskConfig = await (program.account as any).riskConfig.fetch(riskConfigPda);
@@ -107,6 +118,9 @@ async function main() {
         (riskConfig as any).maintenanceMarginBps
       ),
       liquidation_fee_bps: Number((riskConfig as any).liquidationFeeBps),
+      liquidation_target_margin_bps: Number(
+        (riskConfig as any).liquidationTargetMarginBps
+      ),
       circuit_breaker_threshold: Number(
         (riskConfig as any).circuitBreakerThreshold
       ),

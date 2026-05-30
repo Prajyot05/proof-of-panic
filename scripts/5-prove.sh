@@ -11,6 +11,7 @@ ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 SNAPSHOT="${1:-$ROOT_DIR/outputs/snapshot.json}"
 OUTPUT_DIR="$ROOT_DIR/outputs/sp1"
 SHOCK_BPS="${2:-3000}"
+SHOCK_UP="${3:-false}"
 
 echo "══════════════════════════════════════"
 echo " PROOF OF PANIC — SP1 Proof Generation"
@@ -29,7 +30,9 @@ PROVE_START=$(date +%s)
 cargo run --release --bin prove -- \
     --snapshot "$SNAPSHOT" \
     --output "$OUTPUT_DIR" \
-    --shock-bps "$SHOCK_BPS"
+    --shock-bps "$SHOCK_BPS" \
+    --cache \
+    $( [ "$SHOCK_UP" = "true" ] && echo "--shock-up" )
 PROVE_END=$(date +%s)
 PROVE_TIME=$((PROVE_END - PROVE_START))
 

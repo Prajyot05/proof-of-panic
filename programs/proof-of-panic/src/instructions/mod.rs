@@ -1,9 +1,23 @@
 pub mod init_positions;
+pub mod fund_reward_vault;
+pub mod init_incentives;
+pub mod init_position_registry;
 pub mod initialize;
+pub mod refresh_oracle;
 pub mod submit_proof;
+pub mod update_incentives;
+pub mod update_position_root;
 pub mod update_risk;
+pub mod upsert_position;
 
 pub use init_positions::*;
+pub use fund_reward_vault::*;
+pub use init_incentives::*;
+pub use init_position_registry::*;
 pub use initialize::*;
+pub use refresh_oracle::*;
 pub use submit_proof::*;
+pub use update_incentives::*;
+pub use update_position_root::*;
 pub use update_risk::*;
+pub use upsert_position::*;

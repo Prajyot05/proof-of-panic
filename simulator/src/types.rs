@@ -87,6 +87,9 @@ pub struct SimRiskConfig {
     /// Liquidation fee in basis points
     pub liquidation_fee_bps: u64,
 
+    /// Target margin after partial liquidation in basis points
+    pub liquidation_target_margin_bps: u64,
+
     /// Circuit breaker threshold (0 to 1,000,000)
     pub circuit_breaker_threshold: u64,
 
@@ -126,6 +129,12 @@ pub struct PositionResult {
     /// Loss amount if liquidated (absorbed by insurance or becomes bad debt)
     pub liquidation_loss: u64,
 
+    /// Fees collected from liquidation
+    pub liquidation_fee_paid: u64,
+
+    /// Size liquidated from the position
+    pub liquidated_size: u64,
+
     /// Effective collateral after PnL
     pub effective_collateral: i64,
 }
@@ -141,6 +150,9 @@ pub struct SimResult {
     /// Shock magnitude in basis points
     pub shock_bps: u64,
 
+    /// True if the shock is a price increase (short squeeze)
+    pub shock_direction_up: bool,
+
     /// Results for each position
     pub position_results: Vec<PositionResult>,
 
@@ -149,6 +161,9 @@ pub struct SimResult {
 
     /// Total liquidation losses
     pub total_losses: u64,
+
+    /// Total liquidation fees collected
+    pub total_fees_collected: u64,
 
     /// Insurance fund balance after absorbing losses
     pub insurance_fund_remaining: u64,

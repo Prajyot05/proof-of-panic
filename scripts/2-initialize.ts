@@ -123,6 +123,9 @@ async function main() {
     `  Liquidation Fee:    ${Number((config as any).liquidationFeeBps) / 100}%`
   );
   console.log(
+    `  Target Margin:      ${Number((config as any).liquidationTargetMarginBps) / 100}%`
+  );
+  console.log(
     `  CB Threshold:       ${Number((config as any).circuitBreakerThreshold) / 10000}%`
   );
   console.log(

@@ -5,6 +5,10 @@ use anchor_lang::solana_program;
 pub const GLOBAL_STATE_SEED: &[u8] = b"global_state";
 pub const RISK_CONFIG_SEED: &[u8] = b"risk_config";
 pub const POSITION_BOOK_SEED: &[u8] = b"position_book";
+pub const POSITION_REGISTRY_SEED: &[u8] = b"position_registry";
+pub const POSITION_ACCOUNT_SEED: &[u8] = b"position_account";
+pub const INCENTIVES_CONFIG_SEED: &[u8] = b"incentives_config";
+pub const REWARD_VAULT_SEED: &[u8] = b"reward_vault";
 
 /// Maximum number of positions in the PositionBook.
 /// Fixed at 8 for the demo — keeps the Noir circuit at a manageable size.
@@ -20,6 +24,9 @@ pub const BPS_DENOMINATOR: u64 = 10_000;
 
 /// Risk score range: 0 to RISK_SCORE_MAX (1,000,000 = 100%)
 pub const RISK_SCORE_MAX: u64 = 1_000_000;
+
+/// Public values schema version for proof binding
+pub const PROOF_SCHEMA_VERSION: u32 = 1;
 
 // ── Default protocol parameters ──
 
@@ -37,6 +44,9 @@ pub const DEFAULT_MAINTENANCE_MARGIN_BPS: u64 = 500;
 
 /// Default liquidation fee: 2.5% (250 bps)
 pub const DEFAULT_LIQUIDATION_FEE_BPS: u64 = 250;
+
+/// Default liquidation target margin: 8% (800 bps)
+pub const DEFAULT_LIQUIDATION_TARGET_MARGIN_BPS: u64 = 800;
 
 /// Default circuit breaker threshold: 70% risk (700,000 / 1,000,000)
 pub const DEFAULT_CB_THRESHOLD: u64 = 700_000;
@@ -58,3 +68,12 @@ pub const MAX_PROOF_AGE_SLOTS: u64 = 150;
 
 /// Circuit breaker reset timelock in slots (~10 minutes at 400ms/slot)
 pub const CB_RESET_TIMELOCK_SLOTS: u64 = 1500;
+
+/// Default governance timelock for risk updates (~5 minutes at 400ms/slot)
+pub const DEFAULT_GOVERNANCE_TIMELOCK_SLOTS: u64 = 750;
+
+/// Default proof reward in lamports (0.002 SOL)
+pub const DEFAULT_PROOF_REWARD_LAMPORTS: u64 = 2_000_000;
+
+/// Minimum slots between rewarded proofs
+pub const DEFAULT_MIN_PROOF_INTERVAL_SLOTS: u64 = 5;
