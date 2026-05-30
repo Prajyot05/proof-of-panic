@@ -16,7 +16,7 @@ pub mod state;
 
 use instructions::*;
 
-declare_id!("83BAXjSPcnYDUERRH3jbMB9mFqmHiZGjxp3H1xVsyTVg");
+declare_id!("9YGU7h7TCskUQ2BkZfSVCkb66NzJPES5m5QrW8vUw6hE");
 
 #[program]
 pub mod proof_of_panic {
@@ -39,20 +39,12 @@ pub mod proof_of_panic {
     pub fn submit_proof_and_verify(
         ctx: Context<SubmitProofAndVerify>,
         proof_bytes: Vec<u8>,
-        public_inputs: Vec<u8>,
-        risk_score: u64,
-        bad_debt: u64,
-        num_liquidated: u64,
-        state_hash: [u8; 32],
+        public_values_bytes: Vec<u8>,
     ) -> Result<()> {
         instructions::submit_proof::handler(
             ctx,
             proof_bytes,
-            public_inputs,
-            risk_score,
-            bad_debt,
-            num_liquidated,
-            state_hash,
+            public_values_bytes,
         )
     }
 

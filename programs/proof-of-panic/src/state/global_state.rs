@@ -36,6 +36,9 @@ pub struct GlobalState {
     /// Current maximum allowed leverage (in micros, e.g., 10_000_000 = 10x)
     pub max_leverage: u64,
 
+    /// Slot when circuit breaker was activated (for reset timelock)
+    pub circuit_breaker_activation_slot: u64,
+
     /// PDA bump seed
     pub bump: u8,
 }
@@ -52,5 +55,6 @@ impl GlobalState {
         + 32  // last_state_hash
         + 8   // last_risk_score
         + 8   // max_leverage
+        + 8   // circuit_breaker_activation_slot
         + 1;  // bump
 }

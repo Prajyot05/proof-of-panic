@@ -40,6 +40,12 @@ pub fn handler(
     }
 
     if reset_circuit_breaker {
+        let clock = Clock::get()?;
+        require!(
+            clock.slot >= global_state.circuit_breaker_activation_slot + CB_RESET_TIMELOCK_SLOTS,
+            PanicError::TimelockNotExpired
+        );
+
         global_state.circuit_breaker_active = false;
         global_state.max_leverage = DEFAULT_MAX_LEVERAGE;
         global_state.last_risk_score = 0;

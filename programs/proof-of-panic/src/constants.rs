@@ -1,4 +1,5 @@
 use anchor_lang::prelude::*;
+use anchor_lang::solana_program;
 
 /// Seeds for PDA derivation
 pub const GLOBAL_STATE_SEED: &[u8] = b"global_state";
@@ -45,3 +46,15 @@ pub const DEFAULT_SHOCK_BPS: u64 = 3_000;
 
 /// Leverage reduction factor when circuit breaker activates (50% reduction)
 pub const CB_LEVERAGE_REDUCTION_BPS: u64 = 5_000;
+
+/// Sunspot verifier program ID.
+/// This MUST match the deployed Sunspot-generated verifier for the panic_proof circuit.
+/// Update this after running `sunspot deploy`.
+/// The current value is a placeholder — replace with the actual deployed verifier program ID.
+pub const SUNSPOT_VERIFIER_PROGRAM_ID: Pubkey = Pubkey::new_from_array([0; 32]);
+
+/// Maximum proof age in slots (~1 minute at 400ms/slot)
+pub const MAX_PROOF_AGE_SLOTS: u64 = 150;
+
+/// Circuit breaker reset timelock in slots (~10 minutes at 400ms/slot)
+pub const CB_RESET_TIMELOCK_SLOTS: u64 = 1500;
