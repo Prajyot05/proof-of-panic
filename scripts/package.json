@@ -7,6 +7,7 @@
     "deploy": "npx ts-node 1-deploy.ts",
     "initialize": "npx ts-node 2-initialize.ts",
     "snapshot": "npx ts-node 3-snapshot.ts",
+    "benchmark": "npx ts-node 8-benchmark.ts",
     "verify": "npx ts-node 6-verify.ts",
     "status": "npx ts-node 7-status.ts"
   },

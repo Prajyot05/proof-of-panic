@@ -39,12 +39,8 @@ pub struct InitIncentives<'info> {
     pub incentives_config: Account<'info, IncentivesConfig>,
 
     #[account(
-        init,
-        payer = authority,
-        space = 0,
         seeds = [REWARD_VAULT_SEED],
         bump,
-        owner = system_program::ID,
     )]
     /// CHECK: System account owned by system program
     pub reward_vault: UncheckedAccount<'info>,

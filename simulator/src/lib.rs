@@ -1,3 +1,4 @@
+pub mod adapters;
 pub mod commitment;
 pub mod liquidation;
 pub mod scenarios;

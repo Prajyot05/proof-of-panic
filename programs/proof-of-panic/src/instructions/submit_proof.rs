@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
-use anchor_lang::system_program;
 use anchor_lang::solana_program::hash::hash;
+use anchor_lang::system_program;
 
 use crate::constants::*;
 use crate::errors::PanicError;
@@ -50,9 +50,9 @@ pub fn handler(
     }
 
     // ── Step 1.5: Bind public inputs to instruction arguments ──
-    let public_values: PublicValuesStruct = 
+    let public_values: PublicValuesStruct =
         PublicValuesStruct::try_from_slice(&public_values_bytes)
-        .map_err(|_| PanicError::InvalidRiskParam)?;
+            .map_err(|_| PanicError::InvalidRiskParam)?;
 
     require!(
         public_values.schema_version == PROOF_SCHEMA_VERSION,
@@ -61,18 +61,18 @@ pub fn handler(
 
     // ============================================================================
     // ARCHITECTURE NOTE (Phase 1 & 8): STATE HASH BINDING
-    // 
-    // The previous AI review incorrectly stated that the state hash binding was 
-    // "broken" or "not wired through". 
+    //
+    // The previous AI review incorrectly stated that the state hash binding was
+    // "broken" or "not wired through".
     //
     // As seen below, the live state hash is computed dynamically at the exact
     // moment of verification by hashing the fully serialized PositionBook:
     // `let computed_state_hash = hash(positions_bytes);`
     //
-    // The proof's public values MUST strictly match this exact hash. If an 
-    // adversary tries to submit a valid proof computed against a stale or 
-    // fabricated state, the `StateHashMismatch` constraint will immediately 
-    // revert the transaction. The ZK proof is cryptographically anchored to 
+    // The proof's public values MUST strictly match this exact hash. If an
+    // adversary tries to submit a valid proof computed against a stale or
+    // fabricated state, the `StateHashMismatch` constraint will immediately
+    // revert the transaction. The ZK proof is cryptographically anchored to
     // the true on-chain state.
     // ============================================================================
 
@@ -132,15 +132,21 @@ pub fn handler(
     // ── Step 1.6: Oracle integration (Pyth) ──
     if let Some(pyth_acc) = &ctx.accounts.pyth_oracle {
         let pyth_data = pyth_acc.try_borrow_data()?;
-        let price_account: &pyth_sdk_solana::state::SolanaPriceAccount = 
+        let price_account: &pyth_sdk_solana::state::SolanaPriceAccount =
             pyth_sdk_solana::state::load_price_account(&pyth_data)
-            .map_err(|_| PanicError::InvalidOracle)?;
-            
-        let current_price = price_account.to_price_feed(&pyth_acc.key()).get_price_unchecked().price;
+                .map_err(|_| PanicError::InvalidOracle)?;
+
+        let current_price = price_account
+            .to_price_feed(&pyth_acc.key())
+            .get_price_unchecked()
+            .price;
         let expo = price_account.expo;
-        
+
         let pyth_price = scale_pyth_price(current_price, expo)?;
-        require!(pyth_price == public_values.pre_shock_price, PanicError::InvalidOracle);
+        require!(
+            pyth_price == public_values.pre_shock_price,
+            PanicError::InvalidOracle
+        );
 
         msg!("Live Pyth price: {}, expo: {}", current_price, expo);
     }
@@ -151,7 +157,7 @@ pub fn handler(
     #[cfg(not(feature = "test-mock-verify"))]
     {
         let verifier_program = &ctx.accounts.sp1_verifier;
-        
+
         let mut verify_data = Vec::with_capacity(proof_bytes.len() + public_values_bytes.len());
         verify_data.extend_from_slice(&proof_bytes);
         verify_data.extend_from_slice(&public_values_bytes);
@@ -179,7 +185,8 @@ pub fn handler(
     global_state.last_proof_schema_version = public_values.schema_version;
     global_state.last_risk_score = public_values.risk_score;
 
-    msg!("Risk score: {}/{} ({}.{}%)",
+    msg!(
+        "Risk score: {}/{} ({}.{}%)",
         public_values.risk_score,
         RISK_SCORE_MAX,
         public_values.risk_score * 100 / RISK_SCORE_MAX,
@@ -205,25 +212,29 @@ pub fn handler(
 
         msg!("══════════════════════════════════════════════");
         msg!("⚠️  CIRCUIT BREAKER ACTIVATED");
-        msg!("  Risk score {} exceeds threshold {}",
-            public_values.risk_score, risk_config.circuit_breaker_threshold);
-        msg!("  Max leverage reduced: {}x → {}x",
+        msg!(
+            "  Risk score {} exceeds threshold {}",
+            public_values.risk_score,
+            risk_config.circuit_breaker_threshold
+        );
+        msg!(
+            "  Max leverage reduced: {}x → {}x",
             old_leverage / SCALE,
-            reduced_leverage / SCALE);
+            reduced_leverage / SCALE
+        );
         msg!("══════════════════════════════════════════════");
     } else {
         msg!("✓ Protocol is within safe parameters — no circuit breaker needed");
     }
 
     // ── Phase 5: Keeper Incentives Payout ──
-    if let (Some(incentives), Some(vault)) = (
-        &ctx.accounts.incentives_config,
-        &ctx.accounts.reward_vault,
-    ) {
+    if let (Some(incentives), Some(vault)) =
+        (&ctx.accounts.incentives_config, &ctx.accounts.reward_vault)
+    {
         if incentives.enabled {
             let reward = incentives.reward_lamports;
             let min_interval = incentives.min_proof_interval_slots;
-            
+
             let should_pay = if min_interval > 0 {
                 slots_since_last_proof >= min_interval
             } else {
@@ -243,9 +254,13 @@ pub fn handler(
                     },
                     signer,
                 );
-                
+
                 if anchor_lang::system_program::transfer(cpi_context, reward).is_ok() {
-                    msg!("Phase 5 (Incentives): Rewarded keeper {} with {} lamports", ctx.accounts.submitter.key(), reward);
+                    msg!(
+                        "Phase 5 (Incentives): Rewarded keeper {} with {} lamports",
+                        ctx.accounts.submitter.key(),
+                        reward
+                    );
                 } else {
                     msg!("Phase 5: Failed to transfer reward. Continuing execution.");
                 }

@@ -80,6 +80,6 @@ pub fn main() {
         num_liquidated,
     };
 
-    let bytes = public_values.try_to_vec().expect("borsh serialize public values");
+    let bytes = borsh::to_vec(&public_values).expect("borsh serialize public values");
     sp1_zkvm::io::commit_slice(&bytes);
 }

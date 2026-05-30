@@ -2,13 +2,16 @@
   "pre_shock_price": 150000000,
   "post_shock_price": 103950000,
   "shock_bps": 3000,
+  "shock_direction_up": false,
   "position_results": [
     {
       "index": 0,
       "unrealized_pnl": -30000000000,
       "margin_ratio_bps": 0,
       "is_liquidated": true,
-      "liquidation_loss": 22500000000,
+      "liquidation_loss": 20000000000,
+      "liquidation_fee_paid": 2500000000,
+      "liquidated_size": 100000000000,
       "effective_collateral": -20000000000
     },
     {
@@ -16,7 +19,9 @@
       "unrealized_pnl": -24193548387,
       "margin_ratio_bps": 0,
       "is_liquidated": true,
-      "liquidation_loss": 21068548387,
+      "liquidation_loss": 19193548387,
+      "liquidation_fee_paid": 1875000000,
+      "liquidated_size": 75000000000,
       "effective_collateral": -19193548387
     },
     {
@@ -24,7 +29,9 @@
       "unrealized_pnl": -20625000000,
       "margin_ratio_bps": 0,
       "is_liquidated": true,
-      "liquidation_loss": 19125000000,
+      "liquidation_loss": 17625000000,
+      "liquidation_fee_paid": 1500000000,
+      "liquidated_size": 60000000000,
       "effective_collateral": -17625000000
     },
     {
@@ -33,6 +40,8 @@
       "margin_ratio_bps": 4831,
       "is_liquidated": false,
       "liquidation_loss": 0,
+      "liquidation_fee_paid": 0,
+      "liquidated_size": 0,
       "effective_collateral": 19324137931
     },
     {
@@ -40,15 +49,18 @@
       "unrealized_pnl": -16772151898,
       "margin_ratio_bps": 0,
       "is_liquidated": true,
-      "liquidation_loss": 16022151898,
+      "liquidation_loss": 14772151898,
+      "liquidation_fee_paid": 1250000000,
+      "liquidated_size": 50000000000,
       "effective_collateral": -14772151898
     }
   ],
   "num_liquidated": 4,
-  "total_losses": 78715700285,
+  "total_losses": 71590700285,
+  "total_fees_collected": 7125000000,
   "insurance_fund_remaining": 0,
-  "total_bad_debt": 28715700285,
-  "risk_score": 1000000,
+  "total_bad_debt": 14465700285,
+  "risk_score": 516632,
   "protocol_solvent": false,
   "state_hash": [
     173,

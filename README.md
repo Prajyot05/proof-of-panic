@@ -8,11 +8,11 @@ Proof of Panic is a protocol safety system that uses zero-knowledge proofs to en
 
 Perpetual protocols face a fundamental problem: they need to stress-test their positions against adversarial market conditions, but on-chain simulation is prohibitively expensive.
 
-| Approach | Trustless? | Affordable? | Scales? |
-|:---------|:-----------|:------------|:--------|
-| On-chain simulation | ✅ | ❌ ~50K CU/position | ❌ Hits tx limits at ~28 positions |
-| Off-chain simulation (no proof) | ❌ Must trust simulator | ✅ | ✅ |
-| **Off-chain + SP1 ZK proof** | **✅ Proof guarantees correctness** | **✅ ~200K CU total** | **✅ O(1) verification** |
+| Approach                        | Trustless?                          | Affordable?           | Scales?                            |
+| :------------------------------ | :---------------------------------- | :-------------------- | :--------------------------------- |
+| On-chain simulation             | ✅                                  | ❌ ~50K CU/position   | ❌ Hits tx limits at ~28 positions |
+| Off-chain simulation (no proof) | ❌ Must trust simulator             | ✅                    | ✅                                 |
+| **Off-chain + SP1 ZK proof**    | **✅ Proof guarantees correctness** | **✅ ~200K CU total** | **✅ O(1) verification**           |
 
 A compromised simulator could report "protocol is safe" when it's actually insolvent. With ZK proofs, the circuit **re-derives all values from raw position data** — a malicious simulator cannot produce a valid proof for incorrect results.
 
@@ -39,13 +39,13 @@ A compromised simulator could report "protocol is safe" when it's actually insol
 
 ## The Pipeline
 
-| Step | What Happens | Time |
-|:-----|:-------------|:-----|
-| **① Snapshot** | TypeScript reads on-chain positions via RPC | ~1s |
-| **② Simulate** | Rust engine applies market shock, computes liquidation cascade | ~2ms |
-| **③ Prove** | SP1 script compiles the ELF, executes witness, and generates ZK proof | ~1-10m |
-| **④ Verify** | Anchor program verifies state hash + ZK proof on-chain | ~200K CU |
-| **⑤ Act** | If risk > threshold, circuit breaker fires: max leverage halved (10x → 5x) | Automatic |
+| Step           | What Happens                                                               | Time      |
+| :------------- | :------------------------------------------------------------------------- | :-------- |
+| **① Snapshot** | TypeScript reads on-chain positions via RPC                                | ~1s       |
+| **② Simulate** | Rust engine applies market shock, computes liquidation cascade             | ~2ms      |
+| **③ Prove**    | SP1 script compiles the ELF, executes witness, and generates ZK proof      | ~1-10m    |
+| **④ Verify**   | Anchor program verifies state hash + ZK proof on-chain                     | ~200K CU  |
+| **⑤ Act**      | If risk > threshold, circuit breaker fires: max leverage halved (10x → 5x) | Automatic |
 
 ## War Room Dashboard
 
@@ -57,6 +57,7 @@ The project includes a scenario playback visualization dashboard that animates t
 - **Circuit breaker overlay** — Dramatic activation when the protocol enters emergency mode
 - **ZK proof verification panel** — Visual pipeline from snapshot → proof → on-chain verification
 - **5 adversarial scenarios** — Switch between different market conditions directly in the dashboard
+- **Live RPC Feed** — Streams true protocol state directly from the Solana validator, computing live risk metrics in real-time
 
 ```bash
 cd app && npm run dev    # Opens at http://localhost:3000
@@ -66,25 +67,25 @@ cd app && npm run dev    # Opens at http://localhost:3000
 
 The system is tested against 5 distinct market conditions:
 
-| Scenario | Shock | Liquidated | Bad Debt | Outcome |
-|:---------|:------|:-----------|:---------|:--------|
-| **Volatility Shock** | SOL -30% | 4/5 | $21,590 | Circuit breaker fires |
-| **Mild Correction** | SOL -10% | 4/5 | $0 | Insurance absorbs losses |
-| **Flash Crash** | SOL -50% | 4/5 | $76,850 | Catastrophic insolvency |
-| **Short Squeeze** | SOL +40% | 1/5 | $0 | Short crushed, longs profit |
-| **Cascading Leverage** | SOL -30% | 8/8 | $108,695 | Total wipeout |
+| Scenario               | Shock    | Liquidated | Bad Debt | Outcome                     |
+| :--------------------- | :------- | :--------- | :------- | :-------------------------- |
+| **Volatility Shock**   | SOL -30% | 4/5        | $21,590  | Circuit breaker fires       |
+| **Mild Correction**    | SOL -10% | 4/5        | $0       | Insurance absorbs losses    |
+| **Flash Crash**        | SOL -50% | 4/5        | $76,850  | Catastrophic insolvency     |
+| **Short Squeeze**      | SOL +40% | 1/5        | $0       | Short crushed, longs profit |
+| **Cascading Leverage** | SOL -30% | 8/8        | $108,695 | Total wipeout               |
 
 Generate all scenarios: `./scripts/generate-scenarios.sh`
 
 ## Performance
 
-| Metric | Value |
-|:-------|:------|
-| Simulation (5 positions) | ~2ms |
+| Metric                          | Value            |
+| :------------------------------ | :--------------- |
+| Simulation (5 positions)        | ~2ms             |
 | ZK proof generation (SP1 local) | ~2m (w/ caching) |
-| Proof size (Groth16) | 128 bytes |
-| On-chain verification | ~200,000 CU |
-| Total on-chain storage | 700 bytes |
+| Proof size (Groth16)            | 128 bytes        |
+| On-chain verification           | ~200,000 CU      |
+| Total on-chain storage          | 700 bytes        |
 
 Full benchmarks: [`docs/BENCHMARKS.md`](docs/BENCHMARKS.md)
 
@@ -133,15 +134,15 @@ cd app && npm install && npm run dev
 
 ## Demo Flow
 
-| Step | Command | What Happens |
-|:-----|:--------|:-------------|
-| 1 | `anchor deploy` | Deploy on-chain program |
-| 2 | `npx ts-node scripts/2-initialize.ts` | Initialize protocol + 5 positions |
-| 3 | `npx ts-node scripts/3-snapshot.ts` | Snapshot on-chain state to JSON |
-| 4 | `./scripts/4-simulate.sh` | Simulate 30% SOL crash |
-| 5 | `./scripts/5-prove.sh` | Generate ZK proof |
-| 6 | `npx ts-node scripts/6-verify.ts` | Verify proof on-chain, trigger circuit breaker |
-| 7 | `npx ts-node scripts/7-status.ts` | Display final protocol state |
+| Step | Command                               | What Happens                                   |
+| :--- | :------------------------------------ | :--------------------------------------------- |
+| 1    | `anchor deploy`                       | Deploy on-chain program                        |
+| 2    | `npx ts-node scripts/2-initialize.ts` | Initialize protocol + 5 positions              |
+| 3    | `npx ts-node scripts/3-snapshot.ts`   | Snapshot on-chain state to JSON                |
+| 4    | `./scripts/4-simulate.sh`             | Simulate 30% SOL crash                         |
+| 5    | `./scripts/5-prove.sh`                | Generate ZK proof                              |
+| 6    | `npx ts-node scripts/6-verify.ts`     | Verify proof on-chain, trigger circuit breaker |
+| 7    | `npx ts-node scripts/7-status.ts`     | Display final protocol state                   |
 
 ## Project Structure
 
@@ -159,6 +160,7 @@ proof-of-panic/
 │       ├── shock.rs             # Market shock application
 │       ├── liquidation.rs       # Cascade engine (PnL + margin + liquidation)
 │       ├── solvency.rs          # Insurance fund + bad debt computation
+│       ├── adapters.rs          # Multi-market adapter abstraction
 │       ├── commitment.rs        # SHA-256 state hash
 │       └── witness.rs           # Noir witness file generation
 ├── sp1-program/                 # SP1 zkVM Guest
@@ -170,6 +172,7 @@ proof-of-panic/
 ├── scripts/                     # Demo orchestration
 │   ├── demo.sh                  # Full end-to-end pipeline
 │   └── generate-scenarios.sh    # Generate all 5 scenario datasets
+│   └── 8-benchmark.ts           # Reproducible benchmark harness
 └── docs/
     ├── ARCHITECTURE.md          # Technical paper (math, threat model, ZK rationale)
     └── BENCHMARKS.md            # Performance metrics and scaling analysis
@@ -187,10 +190,13 @@ proof-of-panic/
 See the full threat model in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md#threat-model).
 
 Key security properties:
+
 - **Malicious simulator protection**: ZK circuit re-derives all values from raw data — incorrect results cannot produce valid proofs
 - **State anchoring**: On-chain SHA-256 of live PositionBook rejects proofs against stale/tampered state
 - **Replay protection**: State hash uniqueness + slot tracking prevent proof reuse
 - **False panic prevention**: Circuit constraints enforce correct risk score computation — cannot fabricate emergencies
+- **Governance Timelocks**: Protocol risk parameter updates enforce strict slot-based timelocks to prevent sudden malicious manipulation
+- **Incentive Integrity**: Prover payouts strictly track last submitters and minimum intervals, guarding against reward vault drain attacks
 
 ## License
 
