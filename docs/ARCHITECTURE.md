@@ -29,7 +29,7 @@ Perpetual protocols on Solana manage leveraged positions that are vulnerable to 
 **Proof of Panic** solves this with a three-stage pipeline:
 
 1. **Simulate** — A deterministic Rust engine runs the full liquidation cascade off-chain
-2. **Prove** — A Noir ZK circuit generates a succinct proof that the simulation was mathematically correct
+2. **Prove** — SP1 (a general-purpose zkVM) generates a succinct Groth16 proof that the simulation was mathematically correct
 3. **Verify & Act** — A Solana program verifies the proof on-chain (~200,000 CU) and autonomously activates a circuit breaker if the protocol is at risk
 
 This architecture enables **trustless protocol defense**: the protocol can react to adversarial conditions without trusting the entity running the simulation.
@@ -70,12 +70,11 @@ This architecture enables **trustless protocol defense**: the protocol can react
 │                                                        │   Verifier.toml             │
 │                                                        ▼                             │
 │                                                ┌─────────────────┐                   │
-│                                                │  Noir Circuit    │                   │
-│                                                │  (panic_proof)   │                   │
+│                                                │  SP1 zkVM Guest  │                   │
+│                                                │  (sp1-program)   │                   │
 │                                                │                  │                   │
-│                                                │  ④ nargo compile │                   │
-│                                                │     nargo execute│                   │
-│                                                │     sunspot prove│                   │
+│                                                │  ④ sp1 build     │                   │
+│                                                │     sp1 prove    │                   │
 │                                                └─────────────────┘                   │
 └────────────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -86,8 +85,8 @@ This architecture enables **trustless protocol defense**: the protocol can react
 |:-----|:----------|:-------|:-------|
 | ① | TypeScript (3-snapshot.ts) | Read on-chain accounts via RPC | `demo-snapshot.json` |
 | ② | — | Pass JSON to simulator | — |
-| ③ | Rust Simulator | Apply shock, compute cascade, generate witness | `Prover.toml`, `Verifier.toml`, `results.json` |
-| ④ | Noir + Sunspot | Compile circuit, execute witness, generate Groth16 proof | `panic_proof.proof` |
+| ③ | Rust Simulator | Apply shock, compute cascade, export state | `results.json` |
+| ④ | SP1 Script | Compile ELF, execute zkVM, generate Groth16 proof | `proof.bin` |
 | ⑤ | TypeScript (6-verify.ts) | Submit proof + results to on-chain program | Transaction |
 | ⑥ | Anchor Program | Verify state hash, verify proof (CPI), activate circuit breaker | Updated GlobalState |
 
@@ -273,36 +272,21 @@ For this implementation with 8 positions, a flat SHA-256 hash is:
 
 ### Circuit Architecture
 
-The Noir circuit (`circuits/panic_proof/src/main.nr`) enforces 5 verification steps:
+The SP1 zkVM guest program (`sp1-program/src/main.rs`) enforces the following verification logic entirely in Rust:
 
 **Step 1: State Commitment Verification**
-- Reconstructs the 512-byte canonical representation from private witness data
+- Reconstructs the 512-byte canonical representation from the simulation position data
 - Computes SHA-256 hash
 - Asserts hash matches the public input `state_hash`
 - *This anchors the proof to a specific on-chain state*
 
-**Step 2: PnL Verification (per position)**
-- For each open position, verifies: `computed_pnl × entry_price ≈ size × price_diff`
-- Uses integer division verification with remainder bounds:
-  ```
-  pnl × entry ≤ size × price_diff < (pnl + 1) × entry
-  ```
-- Validates PnL sign correctness (positive for profitable, negative for losing)
+**Step 2: Simulation Execution**
+- The zkVM natively executes the `evaluate_positions` and `apply_shock_up` / `apply_shock_down` functions imported from the `panic-simulator` Rust library.
+- This guarantees the exact same logic is proven off-chain as if it were executed on-chain.
 
-**Step 3: Margin Ratio Verification (per position)**
-- Computes effective collateral from collateral ± PnL
-- Verifies: `margin_ratio × size ≈ effective_collateral × 10000`
-- Validates underwater positions have margin ratio = 0
-
-**Step 4: Liquidation Flag Verification (per position)**
-- Asserts: if `margin_ratio < maintenance_margin` → position is marked liquidated
-- Asserts: if `margin_ratio ≥ maintenance_margin` → position is NOT marked liquidated
-- Counts verified liquidations and losses
-
-**Step 5: Aggregate Verification**
-- Asserts: `verified_liquidation_count == num_liquidated` (public input)
-- Verifies bad debt calculation: `total_losses > insurance → bad_debt = total_losses - insurance`
-- Verifies risk score computation with integer division bounds
+**Step 3: Aggregate Verification**
+- Computes `verified_liquidation_count`, `total_bad_debt`, and `risk_score` natively.
+- Commits these computed values to the SP1 public values buffer (`sp1_zkvm::io::commit`).
 
 ### Public vs. Private Inputs
 
@@ -317,19 +301,16 @@ The Noir circuit (`circuits/panic_proof/src/main.nr`) enforces 5 verification st
 | `risk_score` | **Public** | Normalized stress level |
 | `num_liquidated` | **Public** | How many positions were liquidated |
 | `positions_*` arrays | **Private** | Individual position details (privacy-preserving) |
-| `computed_*` arrays | **Private** | Intermediate computation results |
 
-The private witness means that individual trader positions are not revealed on-chain — only the aggregate risk metrics are public. This is a privacy advantage over on-chain simulation.
+The private witness memory means that individual trader positions are not revealed on-chain — only the aggregate risk metrics are public. This is a privacy advantage over on-chain simulation, satisfying the "private transactions" meta while preserving protocol safety.
 
-### Proof System: Noir + Groth16 (via Sunspot)
+### Proof System: SP1 + Groth16
 
-- **Noir**: DSL for writing arithmetic circuits. Compiles to an intermediate ACIR representation.
-- **Sunspot**: Converts ACIR to a Groth16 constraint system and generates proofs. Produces a Solana-native verifier program.
-- **On-chain verification**: The Anchor program CPIs to the Sunspot-generated verifier program, passing the proof bytes and public inputs.
+- **SP1**: A highly performant, open-source zkVM based on the RISC-V instruction set.
+- **Gnark**: Used by SP1 to compress the core STARK proof into a succinct Groth16 SNARK proof (~128 bytes).
+- **On-chain verification**: The Anchor program parses the `SP1ProofWithPublicValues` and uses the SP1 Solana Verifier to check the proof.
 
-The `test-mock-verify` feature flag bypasses the CPI for local testing without a deployed verifier.
-
-> **Implementation Note**: The SHA-256 hash assertion in Step 1 is currently bypassed in the circuit due to Noir 1.0 standard library API changes affecting the `sha256` function's interface with byte arrays of this size. The canonical byte reconstruction and hash computation logic are fully implemented — only the final `assert(computed_hash == state_hash)` is commented out. All other verification steps (PnL, margin, liquidation, solvency) are fully active and verified. The on-chain `submit_proof_and_verify` instruction independently computes and verifies the state hash, providing the same security guarantee through a different path.
+The `test-mock-verify` feature flag bypasses the CPI for local testing without deploying the heavy verifier program.
 
 ---
 

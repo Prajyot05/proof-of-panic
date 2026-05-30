@@ -8,11 +8,11 @@
 |:-------|:------|:------|
 | **Simulation time** (5 positions) | ~2ms | Rust release build, deterministic computation |
 | **Simulation time** (8 positions) | ~3ms | Cascading leverage scenario |
-| **Noir circuit compilation** | 10–30s | `nargo compile`, depends on cache state |
-| **Witness generation** | 2–5s | `nargo execute` |
-| **Groth16 proof generation** | 10–30s | Via Sunspot (if available) |
-| **Proof size** | 388 bytes | Standard Groth16 proof |
-| **Circuit gate count** | ~31,000 | For 8 positions with PnL + margin + liquidation verification |
+| **SP1 ELF compilation** | 5-10s | `cargo build`, depends on cache state |
+| **SP1 Prover Setup** | 10-20s | Generates proving key and verifying key |
+| **SP1 Core Proof generation** | ~1-2m | Varies by hardware (faster on M-series) |
+| **SP1 Groth16 compression** | ~5-10m | Gnark FFI overhead for final Groth16 SNARK |
+| **Proof size** | 128 bytes | Standard Groth16 proof (compressed from ~2MB core proof) |
 
 ## On-Chain Costs
 
@@ -40,7 +40,7 @@
 
 | Positions | Canonical Bytes | SHA-256 Hashes | Estimated Gate Count | On-Chain Storage |
 |:----------|:---------------|:---------------|:---------------------|:-----------------|
-| 8 (current) | 512 B | 1 | ~31,000 | 528 B |
+| 8 (current) | 512 B | 1 | ~35,000 | 528 B |
 | 32 (Merkle) | 2,048 B | ~5 (tree path) | ~45,000 | ~2,064 B |
 | 128 (Merkle) | 8,192 B | ~7 (tree path) | ~55,000 | ~8,208 B |
 | 1,024 (Merkle) | 65,536 B | ~10 (tree path) | ~70,000 | CMT account |

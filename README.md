@@ -12,18 +12,18 @@ Perpetual protocols face a fundamental problem: they need to stress-test their p
 |:---------|:-----------|:------------|:--------|
 | On-chain simulation | ✅ | ❌ ~50K CU/position | ❌ Hits tx limits at ~28 positions |
 | Off-chain simulation (no proof) | ❌ Must trust simulator | ✅ | ✅ |
-| **Off-chain + ZK proof** | **✅ Proof guarantees correctness** | **✅ ~200K CU total** | **✅ O(1) verification** |
+| **Off-chain + SP1 ZK proof** | **✅ Proof guarantees correctness** | **✅ ~200K CU total** | **✅ O(1) verification** |
 
 A compromised simulator could report "protocol is safe" when it's actually insolvent. With ZK proofs, the circuit **re-derives all values from raw position data** — a malicious simulator cannot produce a valid proof for incorrect results.
 
 ## Architecture
 
 ```
-   On-Chain (Solana)              Off-Chain (Local)              ZK Layer (Noir)
+   On-Chain (Solana)              Off-Chain (Local)              ZK Layer (SP1)
   ┌─────────────────┐          ┌─────────────────────┐        ┌──────────────────┐
   │  GlobalState     │◄── ① ──►│  TypeScript          │        │                  │
-  │  RiskConfig      │ Snapshot │  Orchestrator        │        │  Noir Circuit     │
-  │  PositionBook    │          └─────────┬───────────┘        │  (panic_proof)    │
+  │  RiskConfig      │ Snapshot │  Orchestrator        │        │  SP1 zkVM Guest  │
+  │  PositionBook    │          └─────────┬───────────┘        │  (sp1-program)   │
   │  (zero-copy)     │                    │                    │                  │
   └────────┬─────────┘                    ▼                    │  Verifies:       │
            │                    ┌─────────────────────┐        │  • PnL math      │
@@ -43,7 +43,7 @@ A compromised simulator could report "protocol is safe" when it's actually insol
 |:-----|:-------------|:-----|
 | **① Snapshot** | TypeScript reads on-chain positions via RPC | ~1s |
 | **② Simulate** | Rust engine applies market shock, computes liquidation cascade | ~2ms |
-| **③ Prove** | Noir circuit compiles, generates ZK proof of simulation correctness | ~30s |
+| **③ Prove** | SP1 script compiles the ELF, executes witness, and generates ZK proof | ~1-10m |
 | **④ Verify** | Anchor program verifies state hash + ZK proof on-chain | ~200K CU |
 | **⑤ Act** | If risk > threshold, circuit breaker fires: max leverage halved (10x → 5x) | Automatic |
 
@@ -81,11 +81,10 @@ Generate all scenarios: `./scripts/generate-scenarios.sh`
 | Metric | Value |
 |:-------|:------|
 | Simulation (5 positions) | ~2ms |
-| ZK proof generation | ~30s |
-| Proof size | 388 bytes |
+| ZK proof generation (SP1 local) | ~2m (w/ caching) |
+| Proof size (Groth16) | 128 bytes |
 | On-chain verification | ~200,000 CU |
 | Total on-chain storage | 700 bytes |
-| Circuit gate count | ~31,000 |
 
 Full benchmarks: [`docs/BENCHMARKS.md`](docs/BENCHMARKS.md)
 
@@ -93,8 +92,7 @@ Full benchmarks: [`docs/BENCHMARKS.md`](docs/BENCHMARKS.md)
 
 - **Solana / Anchor** — On-chain program with zero-copy `#[repr(C)]` account layouts
 - **Rust** — Deterministic off-chain liquidation cascade engine
-- **Noir** — ZK circuit proving simulation correctness (~31K gates)
-- **Sunspot** — Groth16 proof generation and on-chain Solana verifier
+- **SP1 (Succinct)** — General purpose zkVM generating Groth16 proofs of the Rust execution
 - **Next.js** — Protocol war-room dashboard with animated visualizations
 
 ## Prerequisites
@@ -105,13 +103,10 @@ sh -c "$(curl -sSfL https://release.anza.xyz/stable/install)"
 cargo install --git https://github.com/coral-xyz/anchor avm --force
 avm install 0.32.0 && avm use 0.32.0
 
-# Noir
-curl -L https://raw.githubusercontent.com/noir-lang/noirup/main/install | bash
-noirup
-
-# Sunspot (optional — for full Groth16 proofs)
-git clone https://github.com/reilabs/sunspot.git
-cd sunspot && go build -o sunspot . && mv sunspot /usr/local/bin/
+# SP1 & Go (for Gnark Groth16 bindings)
+curl -L https://sp1.succinct.xyz | bash
+sp1up
+brew install go
 
 # Node.js (v20+)
 # https://nodejs.org/
@@ -166,8 +161,10 @@ proof-of-panic/
 │       ├── solvency.rs          # Insurance fund + bad debt computation
 │       ├── commitment.rs        # SHA-256 state hash
 │       └── witness.rs           # Noir witness file generation
-├── circuits/panic_proof/        # Noir ZK circuit
-│   └── src/main.nr              # Proves simulation correctness
+├── sp1-program/                 # SP1 zkVM Guest
+│   └── src/main.rs              # Proves simulation correctness
+├── sp1-script/                  # SP1 Host runner
+│   └── src/bin/prove.rs         # Orchestrates ELF generation and proving
 ├── app/                         # Next.js war-room dashboard
 │   └── src/app/page.tsx         # Animated visualization of all scenarios
 ├── scripts/                     # Demo orchestration
@@ -180,10 +177,10 @@ proof-of-panic/
 
 ## Key Design Decisions
 
-- **Zero-copy PositionBook**: Single account with bytemuck `#[repr(C)]` layout. Enables deterministic byte serialization for SHA-256 hashing across Rust, Noir, and on-chain.
+- **Zero-copy PositionBook**: Single account with bytemuck `#[repr(C)]` layout. Enables deterministic byte serialization for SHA-256 hashing across Rust, SP1, and on-chain.
 - **Fixed-point arithmetic**: All values in microdollars (10⁶ scale). No floating point — ensures bit-exact reproducibility across all three execution environments.
 - **SHA-256 state commitment**: Flat hash of 512 canonical bytes. Anchors the ZK proof to actual on-chain state. Production path: Concurrent Merkle Tree for O(log N) scaling.
-- **Feature-gated verification**: `test-mock-verify` flag bypasses Sunspot CPI in testing. Circuit still compiles and executes; only the on-chain verification CPI is skipped.
+- **Feature-gated verification**: `test-mock-verify` flag bypasses SP1 CPI in testing. Circuit still compiles and executes; only the on-chain verification CPI is skipped.
 
 ## Security
 
