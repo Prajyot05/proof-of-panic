@@ -9,7 +9,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 SNAPSHOT="${1:-$SCRIPT_DIR/demo-snapshot.json}"
-OUTPUT_DIR="$ROOT_DIR/circuits/panic_proof"
+OUTPUT_DIR="$ROOT_DIR/outputs"
 SHOCK_BPS="${2:-3000}"
 
 echo ""

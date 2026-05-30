@@ -5,7 +5,7 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-proof_of_panic = "83BAXjSPcnYDUERRH3jbMB9mFqmHiZGjxp3H1xVsyTVg"
+proof_of_panic = "9YGU7h7TCskUQ2BkZfSVCkb66NzJPES5m5QrW8vUw6hE"
 
 [registry]
 url = "https://api.apr.dev"
