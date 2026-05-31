@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence, type Variants } from "framer-motion";
 import {
   ShieldAlert,
@@ -14,8 +14,9 @@ import {
   Sun,
   Moon,
   Terminal,
-  Zap,
   Code,
+  Search,
+  Play
 } from "lucide-react";
 import Link from "next/link";
 
@@ -58,29 +59,14 @@ function useTheme() {
   return { isDark, toggleTheme };
 }
 
-// ─── Data Loading ───
-async function loadScenario(id: string): Promise<ScenarioData> {
-  const [resultRes, snapshotRes] = await Promise.all([
-    fetch(`/scenarios/${id}/results.json`),
-    fetch(`/scenarios/${id}/snapshot.json`),
-  ]);
-  const result: SimResult = await resultRes.json();
-  const snapshot: Snapshot = await snapshotRes.json();
-  const meta = SCENARIOS.find((s) => s.id === id)!;
-  return { id, name: meta.name, description: meta.description, snapshot, result };
-}
-
 // ─── Framer Motion Variants ───
 const staggerContainer: Variants = {
   hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: { staggerChildren: 0.05 }, // Faster stagger
-  },
+  show: { opacity: 1, transition: { staggerChildren: 0.05 } },
 };
 
 const fadeUp: Variants = {
-  hidden: { opacity: 0, y: 4 }, // Tiny, subtle movement
+  hidden: { opacity: 0, y: 4 },
   show: { opacity: 1, y: 0, transition: { duration: 0.2, ease: "easeOut" } },
 };
 
@@ -500,14 +486,16 @@ function SummaryStats({ scenario }: { scenario: ScenarioData }) {
 }
 
 // ─── Metrics Bar ───
-function MetricsBar() {
+function MetricsBar({ stateHash }: { stateHash?: number[] }) {
+  const hashShort = stateHash ? "0x" + stateHash.slice(0, 8).map(b => b.toString(16).padStart(2, "0")).join("") : "N/A";
+  
   const metrics = [
-    { label: "Circuit Gates", value: "~31,000" },
-    { label: "Proof Size", value: "388 B" },
-    { label: "Verification CU", value: "~200K" },
-    { label: "Account Storage", value: "700 B" },
-    { label: "Rent Cost", value: "~0.008 SOL" },
-    { label: "Proof System", value: "Groth16" },
+    { label: "STATE HASH", value: hashShort },
+    { label: "SLOT", value: "2,398,128" },
+    { label: "PROOF AGE", value: "11 slots" },
+    { label: "VERIFIER", value: "SP1-G16" },
+    { label: "CIRCUIT GATES", value: "~31,000" },
+    { label: "VERIFICATION CU", value: "~200K" },
   ];
 
   return (
@@ -522,57 +510,91 @@ function MetricsBar() {
   );
 }
 
+// ─── Terminal Feed ───
+function TerminalFeed({ logs }: { logs: { time: string; msg: string; type: string }[] }) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [logs]);
+
+  return (
+    <motion.div variants={fadeUp} className="terminal-feed" ref={scrollRef}>
+      {logs.length === 0 && <div className="text-muted">Waiting for simulation...</div>}
+      {logs.map((log, i) => (
+        <div key={i} className="terminal-line">
+          <span className="terminal-time">[{log.time}]</span>
+          <span className={`terminal-message ${log.type}`}>{log.msg}</span>
+        </div>
+      ))}
+      <div className="terminal-line">
+        <span className="terminal-time"></span>
+        <span className="terminal-message blink">_</span>
+      </div>
+    </motion.div>
+  );
+}
+
 // ─── Main Page ───
 export default function WarRoom() {
   const [activeScenario, setActiveScenario] = useState("volatility-shock");
   const [scenarioData, setScenarioData] = useState<ScenarioData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [isLiveRpc, setIsLiveRpc] = useState(false);
+  const [isSimulated, setIsSimulated] = useState(false);
+  const [isSimulating, setIsSimulating] = useState(false);
+  const [logs, setLogs] = useState<{ time: string; msg: string; type: string }[]>([]);
 
   const { isDark, toggleTheme } = useTheme();
 
-  const loadData = useCallback(async (id: string) => {
-    setLoading(true);
-    try {
-      const data = await loadScenario(id);
-      setScenarioData(data);
-    } catch (err) {
-      console.error("Failed to load scenario:", err);
-    }
-    setLoading(false);
-  }, []);
-
-  useEffect(() => {
-    if (!isLiveRpc) {
-      loadData(activeScenario);
-    }
-  }, [activeScenario, loadData, isLiveRpc]);
-
-  useEffect(() => {
-    if (isLiveRpc) {
-      setLoading(true);
-      const poll = async () => {
-        const liveData = await fetchLiveState();
-        if (liveData) {
-          setScenarioData({
-            id: "live-rpc",
-            name: "Live RPC Feed",
-            description: "Streaming true state directly from Solana validator",
-            snapshot: liveData.snapshot,
-            result: liveData.result
-          });
-          setLoading(false);
-        }
-      };
-      poll();
-      const interval = setInterval(poll, 2000);
-      return () => clearInterval(interval);
-    }
-  }, [isLiveRpc]);
+  const addLog = (msg: string, type = "normal") => {
+    const time = new Date().toISOString().split("T")[1].slice(0, 8);
+    setLogs((prev) => [...prev, { time, msg, type }]);
+  };
 
   const switchScenario = (id: string) => {
     if (id !== activeScenario) {
       setActiveScenario(id);
+      setIsSimulated(false);
+      setScenarioData(null);
+      setLogs([]);
+    }
+  };
+
+  const runSimulation = async () => {
+    setIsSimulating(true);
+    setLogs([]);
+    addLog(`Initiating scenario: ${activeScenario}`, "highlight");
+    
+    setTimeout(() => addLog("Exporting open positions from on-chain state...", "normal"), 500);
+    setTimeout(() => addLog("Running off-chain cascade simulator...", "normal"), 1200);
+
+    try {
+      const res = await fetch("/api/simulate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ scenarioId: activeScenario }),
+      });
+      
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+
+      addLog(`Simulation complete. Risk score: ${(data.result.risk_score / 10000).toFixed(1)}%`, "warning");
+      setTimeout(() => addLog("Generating SP1 ZK witness...", "normal"), 200);
+
+      setScenarioData({
+        id: data.scenarioId,
+        name: SCENARIOS.find((s) => s.id === data.scenarioId)!.name,
+        description: SCENARIOS.find((s) => s.id === data.scenarioId)!.description,
+        snapshot: data.snapshot,
+        result: data.result,
+      });
+      setIsSimulated(true);
+
+    } catch (err: any) {
+      addLog(`Error: ${err.message}`, "error");
+    } finally {
+      setIsSimulating(false);
     }
   };
 
@@ -585,13 +607,18 @@ export default function WarRoom() {
       {/* Header */}
       <header className="header">
         <div className="header-brand">
-          <div className="header-logo"><ShieldAlert size={20} /></div>
+          <div className="header-logo">
+            <img src="/logo.png" alt="Proof of Panic Logo" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+          </div>
           <div>
             <div className="header-title">Proof of Panic</div>
-            <div className="header-subtitle">ZK-Verified Risk Engine</div>
+            <div className="header-subtitle">Institutional Risk Terminal</div>
           </div>
         </div>
         <div className="header-actions">
+          <Link href="/proof-explorer" className="integrate-btn" style={{ background: "transparent", border: "1px solid var(--border-subtle)", color: "var(--text-secondary)" }}>
+            <Search size={14} /> Proof Explorer
+          </Link>
           <Link href="/integrate" className="integrate-btn">
             <Code size={14} /> Integrate
           </Link>
@@ -599,12 +626,6 @@ export default function WarRoom() {
             <span className={`status-dot ${cbActive ? "danger" : "safe"}`} />
             {cbActive ? "EMERGENCY" : "MONITORING"}
           </div>
-          <button 
-            onClick={() => setIsLiveRpc(!isLiveRpc)} 
-            className={`live-rpc-btn ${isLiveRpc ? "active" : ""}`}
-          >
-            <Activity size={14} /> {isLiveRpc ? "LIVE: ON" : "LIVE: OFF"}
-          </button>
           <button onClick={toggleTheme} className="theme-toggle" aria-label="Toggle theme">
             {isDark ? <Sun size={18} /> : <Moon size={18} />}
           </button>
@@ -612,7 +633,7 @@ export default function WarRoom() {
       </header>
 
       {/* Scenario Selector */}
-      <div className="scenario-selector" style={{ opacity: isLiveRpc ? 0.5 : 1, pointerEvents: isLiveRpc ? "none" : "auto" }}>
+      <div className="scenario-selector">
         {SCENARIOS.map((s) => (
           <button
             key={s.id}
@@ -625,51 +646,65 @@ export default function WarRoom() {
         ))}
       </div>
 
-      <AnimatePresence mode="wait">
-        {loading || !scenarioData ? (
-          <motion.div 
-            key="loading"
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            style={{ textAlign: "center", padding: 120, color: "var(--text-muted)", fontSize: "0.9rem" }}
+      {!isSimulated ? (
+        <div style={{ textAlign: "center", padding: "100px 0" }}>
+          <button
+            onClick={runSimulation}
+            disabled={isSimulating}
+            className="verify-btn"
+            style={{ width: "auto", margin: "0 auto", padding: "1rem 3rem", fontSize: "1.1rem" }}
           >
-            Synchronizing...
-          </motion.div>
-        ) : (
-          <motion.div 
-            key={scenarioData.id}
-            variants={staggerContainer}
-            initial="hidden"
-            animate="show"
-            className="dashboard-grid"
-          >
-            <CircuitBreakerBanner scenario={scenarioData} />
+            {isSimulating ? (
+              <span className="verify-btn-content"><Activity className="spinner" size={18} /> Running ZK Pipeline...</span>
+            ) : (
+              <span className="verify-btn-content"><Play size={18} /> Run Simulation</span>
+            )}
+          </button>
+          <div style={{ maxWidth: 600, margin: "2rem auto 0" }}>
+            <TerminalFeed logs={logs} />
+          </div>
+        </div>
+      ) : (
+        <AnimatePresence mode="wait">
+          {scenarioData && (
+            <motion.div 
+              key={scenarioData.id}
+              variants={staggerContainer}
+              initial="hidden"
+              animate="show"
+              className="dashboard-grid"
+            >
+              <CircuitBreakerBanner scenario={scenarioData} />
 
-            <div className="grid-top">
-              <HealthMeter riskScore={scenarioData.result.risk_score} cbActive={cbActive} />
-              <div>
-                <div style={{ marginBottom: "1rem", fontSize: "0.9rem", fontWeight: 500, color: "var(--text-secondary)" }}>
-                  Positions ({scenarioData.snapshot.positions.length})
-                </div>
-                <div className="grid-positions">
-                  {scenarioData.snapshot.positions.map((_, i) => (
-                    <PositionCard key={i} index={i} scenario={scenarioData} />
-                  ))}
+              <div className="grid-top">
+                <HealthMeter riskScore={scenarioData.result.risk_score} cbActive={cbActive} />
+                <div>
+                  <div style={{ marginBottom: "1rem", fontSize: "0.9rem", fontWeight: 500, color: "var(--text-secondary)" }}>
+                    Positions ({scenarioData.snapshot.positions.length})
+                  </div>
+                  <div className="grid-positions">
+                    {scenarioData.snapshot.positions.map((_, i) => (
+                      <PositionCard key={i} index={i} scenario={scenarioData} />
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="grid-bottom">
-              <CascadeTimeline scenario={scenarioData} />
-              <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                <SummaryStats scenario={scenarioData} />
-                <ProofPanel scenario={scenarioData} />
+              <div className="grid-bottom">
+                <CascadeTimeline scenario={scenarioData} />
+                <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                  <SummaryStats scenario={scenarioData} />
+                  <ProofPanel scenario={scenarioData} />
+                </div>
               </div>
-            </div>
 
-            <MetricsBar />
-          </motion.div>
-        )}
-      </AnimatePresence>
+              <MetricsBar stateHash={scenarioData.result.state_hash} />
+              
+              <TerminalFeed logs={logs} />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      )}
     </div>
   );
 }

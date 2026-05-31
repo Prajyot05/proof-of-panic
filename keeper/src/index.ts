@@ -86,7 +86,7 @@ async function simulateProofGeneration() {
 async function pollRiskState() {
   try {
     const globalState =
-      await client.program.account.globalState.fetch(globalStatePda);
+      await (client.program.account as any).globalState.fetch(globalStatePda);
 
     // Update metrics
     activeRiskScoreGauge.set(globalState.lastRiskScore.toNumber());

@@ -8,6 +8,24 @@
 
 Proof of Panic is a protocol safety system that uses zero-knowledge proofs to enable trustless, automated risk management for perpetual exchanges on Solana. It runs expensive stress-test simulations off-chain, generates a cryptographic proof that the simulation was mathematically correct, verifies the proof on-chain for ~200,000 compute units (regardless of position count), and autonomously activates a circuit breaker when the protocol becomes unsafe.
 
+## Why Not Just Do This On-Chain?
+
+To safely manage a perpetual protocol, you must regularly stress-test the margin health of all positions against adversarial shocks. Doing this directly on-chain is computationally impossible at scale.
+
+```text
+Evaluating 100 Positions against a 30% Market Shock:
+
+🔴 On-Chain Simulation
+   • Cost: 50,000 Compute Units per position
+   • Total: 5,000,000 CU (Exceeds Solana block limits)
+   • Result: Transaction fails, protocol remains unprotected.
+
+🟢 Proof of Panic (ZK Coprocessor)
+   • Cost: O(1) Verification Cost
+   • Total: ~200,000 CU (Regardless of 100 or 10,000 positions)
+   • Result: Transaction succeeds, protocol successfully defends itself.
+```
+
 ## Why Zero-Knowledge Proofs?
 
 Perpetual protocols face a fundamental problem: they need to stress-test their positions against adversarial market conditions, but on-chain simulation is prohibitively expensive.
@@ -20,9 +38,27 @@ Perpetual protocols face a fundamental problem: they need to stress-test their p
 
 A compromised simulator could report "protocol is safe" when it's actually insolvent. With ZK proofs, the circuit **re-derives all values from raw position data** — a malicious simulator cannot produce a valid proof for incorrect results.
 
-## Architecture
+## Production Deployment Architecture
 
+```mermaid
+graph TD
+    A[Pyth Oracle Network] -->|Live Prices| B[Off-Chain Keeper Network]
+    
+    subgraph Proof of Panic Infrastructure
+        B -->|Snapshot| C[Solana Validator RPC]
+        C -.->|State Data| B
+        B -->|Simulate| D[Rust Simulation Engine]
+        D -->|Validates| E[SP1 ZK Prover]
+        E -->|Groth16 Proof + Results| F[Anchor Verifier Program]
+    end
+    
+    subgraph Target Protocol
+        F -->|Verified Risk Metrics| G[Perpetual Exchange]
+        G -->|Trigger| H[Circuit Breakers / Liquidation Logic]
+    end
 ```
+
+## Architecture
    On-Chain (Solana)              Off-Chain (Local)              ZK Layer (SP1)
   ┌─────────────────┐          ┌─────────────────────┐        ┌──────────────────┐
   │  GlobalState     │◄── ① ──►│  TypeScript          │        │                  │
@@ -50,6 +86,31 @@ A compromised simulator could report "protocol is safe" when it's actually insol
 | **③ Prove**    | SP1 script compiles the ELF, executes witness, and generates ZK proof      | ~1-10m    |
 | **④ Verify**   | Anchor program verifies state hash + ZK proof on-chain                     | ~200K CU  |
 | **⑤ Act**      | If risk > threshold, circuit breaker fires: max leverage halved (10x → 5x) | Automatic |
+
+## Integration Guide
+
+**How Perpetual Protocols Integrate Proof of Panic**
+
+Transitioning a protocol to ZK-verified risk management takes 4 simple steps:
+
+1. **Export Open Positions**: Sync your vault and position state to a zero-copy PDA.
+2. **Generate State Commitment**: The protocol maintains a running SHA-256 hash (or Concurrent Merkle Tree) of all open positions.
+3. **Run SP1 Proving Pipeline**: Off-chain Keepers pull the state, run the panic simulator, and generate the proof.
+4. **Submit Proof to Verifier**: The Keeper submits the proof. The Proof of Panic verifier checks the state hash and math constraints.
+
+**The Verifier Returns:**
+- `Risk Score` (e.g. 77.1%)
+- `Bad Debt` generated during the shock
+- `Insurance Fund Usage`
+- `Liquidation Count`
+
+**Automated Protocol Defenses:**
+Using these verified metrics, your protocol can automatically trigger smart contract defenses:
+- 📉 Reduce max leverage for new positions
+- 🛡️ Increase maintenance margin requirements
+- ⏸️ Pause specific high-risk markets
+- 🚫 Restrict liquidity provider withdrawals
+- 🚨 Alert the DAO for emergency intervention
 
 ## War Room Dashboard
 
