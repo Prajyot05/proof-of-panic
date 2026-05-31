@@ -9,11 +9,14 @@
 
 use crate::types::*;
 
+/// Evaluate all open positions against a shocked oracle price.
+/// Identifies underwater positions, computes partial liquidations,
+/// deducts liquidation fees, and recursively computes price impact from liquidations.
 pub fn evaluate_positions(
     positions: &mut [SimPosition],
     mut current_price: u64,
     risk_config: &SimRiskConfig,
-) -> (Vec<PositionResult>, u64) {
+) -> Result<(Vec<PositionResult>, u64), SimulatorError> {
     let mut results = vec![
         PositionResult {
             index: 0,
@@ -50,7 +53,7 @@ pub fn evaluate_positions(
             let margin_ratio_bps = if effective_collateral > 0 {
                 (effective_collateral as u64)
                     .checked_mul(BPS_DENOMINATOR)
-                    .unwrap_or(0)
+                    .ok_or(SimulatorError::MathOverflow)?
                     / pos.size
             } else {
                 0
@@ -74,7 +77,7 @@ pub fn evaluate_positions(
                 if effective_collateral > 0 {
                     let desired_size = (effective_collateral as u128)
                         .checked_mul(BPS_DENOMINATOR as u128)
-                        .unwrap_or(0)
+                        .ok_or(SimulatorError::MathOverflow)?
                         / target_margin_bps as u128;
                     if desired_size < pos.size as u128 {
                         liquidate_size = pos.size - desired_size as u64;
@@ -91,7 +94,7 @@ pub fn evaluate_positions(
                 // Deduct liquidation fee
                 let fee = liquidate_size
                     .checked_mul(risk_config.liquidation_fee_bps)
-                    .unwrap_or(0)
+                    .ok_or(SimulatorError::MathOverflow)?
                     / BPS_DENOMINATOR;
 
                 results[i].liquidation_fee_paid = fee;
@@ -121,7 +124,7 @@ pub fn evaluate_positions(
                 } else {
                     let new_collateral = (pos.collateral as u128)
                         .checked_mul(pos.size as u128)
-                        .unwrap_or(0)
+                        .ok_or(SimulatorError::MathOverflow)?
                         / original_size as u128;
                     pos.collateral = new_collateral as u64;
                 }
@@ -138,14 +141,14 @@ pub fn evaluate_positions(
             // but we'll assume a standard long-squeeze for simplicity).
             let price_drop = current_price
                 .checked_mul(impact_bps)
-                .unwrap_or(0)
+                .ok_or(SimulatorError::MathOverflow)?
                 / BPS_DENOMINATOR;
             
             current_price = current_price.saturating_sub(price_drop);
         }
     }
 
-    (results, current_price)
+    Ok((results, current_price))
 }
 
 /// Compute unrealized PnL for a single position.

@@ -1,6 +1,10 @@
 # Proof of Panic
 
+[![CI](https://github.com/Prajyot05/proof-of-panic/actions/workflows/ci.yml/badge.svg)](https://github.com/Prajyot05/proof-of-panic/actions/workflows/ci.yml)
+
 > **A ZK-verified adversarial risk engine for Solana perpetual protocols.**
+
+[**🔴 TRY THE LIVE DEMO**](https://proof-of-panic.vercel.app/)
 
 Proof of Panic is a protocol safety system that uses zero-knowledge proofs to enable trustless, automated risk management for perpetual exchanges on Solana. It runs expensive stress-test simulations off-chain, generates a cryptographic proof that the simulation was mathematically correct, verifies the proof on-chain for ~200,000 compute units (regardless of position count), and autonomously activates a circuit breaker when the protocol becomes unsafe.
 
@@ -143,6 +147,26 @@ cd app && npm install && npm run dev
 | 5    | `./scripts/5-prove.sh`                | Generate ZK proof                              |
 | 6    | `npx ts-node scripts/6-verify.ts`     | Verify proof on-chain, trigger circuit breaker |
 | 7    | `npx ts-node scripts/7-status.ts`     | Display final protocol state                   |
+
+## Keeper Node & Metrics
+
+Proof of Panic includes an off-chain TypeScript keeper (`keeper/`) that polls the Anchor program, simulates market crashes, and exposes a Prometheus `/metrics` endpoint.
+
+```bash
+cd keeper
+npm install
+npm start
+```
+A Grafana dashboard template is provided in `keeper/grafana-dashboard.json`.
+
+## CI / CD & Devnet Deployments
+
+This repository uses GitHub Actions for continuous integration. To enable automated deployments to the Solana Devnet upon pushing to `main`, you must add a GitHub Repository Secret:
+
+1. Go to your repository **Settings** > **Secrets and variables** > **Actions**.
+2. Click **New repository secret**.
+3. Name: `SOLANA_KEYPAIR_JSON`
+4. Value: The raw JSON array of a funded devnet keypair (e.g., `[1, 2, 3...]`).
 
 ## Project Structure
 

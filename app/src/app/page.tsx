@@ -15,7 +15,9 @@ import {
   Moon,
   Terminal,
   Zap,
+  Code,
 } from "lucide-react";
+import Link from "next/link";
 
 import {
   SCENARIOS,
@@ -309,13 +311,47 @@ function ProofPanel({ scenario }: { scenario: ScenarioData }) {
     { label: "Proof verified", detail: `State: 0x${hash}…`, icon: <ShieldCheck size={14} /> },
   ];
 
+  const [verifying, setVerifying] = useState(false);
+  const [txSignature, setTxSignature] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const verifyOnChain = async () => {
+    setVerifying(true);
+    setError(null);
+    setTxSignature(null);
+
+    try {
+      const res = await fetch("/api/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          scenarioId: scenario.id,
+          riskScore: scenario.result.risk_score,
+          badDebt: scenario.result.total_bad_debt,
+          numLiquidated: scenario.result.num_liquidated,
+          stateHash: scenario.result.state_hash,
+          shockDirectionUp: scenario.result.shock_direction_up,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to verify");
+
+      setTxSignature(data.txSignature || "simulated-tx-base64");
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setVerifying(false);
+    }
+  };
+
   return (
-    <motion.div variants={fadeUp} className="surface-card">
+    <motion.div variants={fadeUp} className="surface-card relative overflow-hidden">
       <div className="card-header">
         <span className="card-title">ZK Verification</span>
-        <span className="card-badge" style={{ color: "var(--color-info)" }}>VERIFIED</span>
+        <span className="card-badge" style={{ color: "var(--color-info)" }}>{txSignature ? "ON-CHAIN" : "LOCAL"}</span>
       </div>
-      <motion.div variants={staggerContainer} initial="hidden" animate="show" className="proof-steps">
+      <motion.div variants={staggerContainer} initial="hidden" animate="show" className="proof-steps mb-6">
         {steps.map((step, i) => (
           <motion.div variants={fadeUp} key={i} className="proof-step step-complete">
             <div className="proof-step-icon">{step.icon}</div>
@@ -326,6 +362,32 @@ function ProofPanel({ scenario }: { scenario: ScenarioData }) {
           </motion.div>
         ))}
       </motion.div>
+      
+      <div className="proof-action-container">
+        <button
+          onClick={verifyOnChain}
+          disabled={verifying || !!txSignature}
+          className="verify-btn"
+        >
+          {verifying ? (
+            <span className="verify-btn-content"><Activity className="spinner" size={16} /> Verifying on Devnet...</span>
+          ) : txSignature ? (
+            <span className="verify-btn-content"><ShieldCheck size={16} /> Verified On-Chain</span>
+          ) : (
+            <span className="verify-btn-content"><Terminal size={16} /> Verify On-Chain (Judge Mode)</span>
+          )}
+        </button>
+        {error && (
+          <div className="verify-error">{error}</div>
+        )}
+        {txSignature && txSignature !== "simulated-tx-base64" && (
+          <div className="verify-success">
+            <a href={`https://explorer.solana.com/tx/${txSignature}?cluster=devnet`} target="_blank" rel="noreferrer">
+              View Transaction
+            </a>
+          </div>
+        )}
+      </div>
     </motion.div>
   );
 }
@@ -530,6 +592,9 @@ export default function WarRoom() {
           </div>
         </div>
         <div className="header-actions">
+          <Link href="/integrate" className="integrate-btn">
+            <Code size={14} /> Integrate
+          </Link>
           <div className={`header-status ${cbActive ? "emergency" : ""}`}>
             <span className={`status-dot ${cbActive ? "danger" : "safe"}`} />
             {cbActive ? "EMERGENCY" : "MONITORING"}

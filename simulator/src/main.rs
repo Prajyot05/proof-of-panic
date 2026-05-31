@@ -16,7 +16,7 @@ use clap::Parser;
 use panic_simulator::commitment::compute_state_hash;
 use panic_simulator::liquidation::evaluate_positions;
 use panic_simulator::scenarios::{get_scenario, list_scenarios, scenario_to_snapshot};
-use panic_simulator::shock::apply_shock;
+use panic_simulator::shock::{apply_shock, apply_shock_up};
 use panic_simulator::solvency::compute_solvency;
 use panic_simulator::types::*;
 
@@ -47,6 +47,10 @@ struct Args {
     /// For short-squeeze scenario: apply shock as a price RISE instead of drop
     #[arg(long)]
     shock_up: bool,
+
+    /// Fetch live SOL/USD price from Pyth Hermes API
+    #[arg(long)]
+    use_live_pyth: bool,
 }
 
 fn main() {
@@ -56,14 +60,15 @@ fn main() {
     if args.list_scenarios {
         println!("Available scenarios:");
         for name in list_scenarios() {
-            let s = get_scenario(name).unwrap();
-            println!("  {:<22} {}", name, s.description);
+            if let Some(s) = get_scenario(name) {
+                println!("  {:<22} {}", name, s.description);
+            }
         }
         return;
     }
 
     // Load snapshot from file or scenario
-    let (snapshot, shock_direction_up) = if let Some(scenario_name) = &args.scenario {
+    let (mut snapshot, shock_direction_up) = if let Some(scenario_name) = &args.scenario {
         let scenario = get_scenario(scenario_name)
             .unwrap_or_else(|| {
                 eprintln!("Unknown scenario: {}", scenario_name);
@@ -88,6 +93,38 @@ fn main() {
         std::process::exit(1);
     };
 
+    if args.use_live_pyth {
+        println!("Fetching live SOL/USD price from Pyth Hermes API...");
+        let url = "https://hermes.pyth.network/v2/updates/price/latest?ids[]=ef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d";
+        match reqwest::blocking::get(url) {
+            Ok(res) => {
+                if let Ok(json) = res.json::<serde_json::Value>() {
+                    if let Some(parsed) = json["parsed"].as_array() {
+                        if let Some(price_data) = parsed.get(0) {
+                            if let Some(price_info) = price_data["price"].as_object() {
+                                let price_str = price_info["price"].as_str().unwrap_or("0");
+                                let expo = price_info["expo"].as_i64().unwrap_or(0);
+                                if let Ok(mut price) = price_str.parse::<u64>() {
+                                    let expo_abs = expo.abs() as u32;
+                                    if expo_abs > 6 {
+                                        price /= 10_u64.pow(expo_abs - 6);
+                                    } else {
+                                        price *= 10_u64.pow(6 - expo_abs);
+                                    }
+                                    println!("Live Pyth SOL Price: ${}.{:02}", price / SCALE, (price % SCALE) / (SCALE / 100));
+                                    snapshot.oracle_price = price;
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            Err(e) => {
+                eprintln!("Warning: Failed to fetch live Pyth price. Error: {}", e);
+            }
+        }
+    }
+
     let output_dir = args.output.unwrap_or_else(|| {
         eprintln!("--output <dir> is required.");
         std::process::exit(1);
@@ -105,9 +142,9 @@ fn main() {
     // ── Apply shock ──
     let pre_shock_price = snapshot.oracle_price;
     let post_shock_price = if shock_direction_up {
-        apply_shock_up(pre_shock_price, shock_bps)
+        apply_shock_up(pre_shock_price, shock_bps).expect("Math overflow")
     } else {
-        apply_shock(pre_shock_price, shock_bps)
+        apply_shock(pre_shock_price, shock_bps).expect("Math overflow")
     };
 
     let direction = if shock_direction_up { "+" } else { "-" };
@@ -129,7 +166,7 @@ fn main() {
         &mut positions,
         post_shock_price,
         &snapshot.risk_config,
-    );
+    ).expect("Evaluation failed due to math overflow");
 
     println!("Position Results:");
     for (i, (pos, res)) in snapshot
@@ -248,13 +285,4 @@ fn main() {
         "✓ Snapshot written to {}/snapshot.json",
         output_dir.display()
     );
-}
-
-/// Apply a basis-points shock as a price RISE (for short-squeeze scenarios).
-fn apply_shock_up(price: u64, shock_bps: u64) -> u64 {
-    let increase_bps = BPS_DENOMINATOR + shock_bps;
-    price
-        .checked_mul(increase_bps)
-        .expect("Price * increase_bps overflow")
-        / BPS_DENOMINATOR
 }

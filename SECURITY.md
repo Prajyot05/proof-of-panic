@@ -4,32 +4,35 @@ This document outlines the known security limitations, trust assumptions, and cr
 
 > **Note to Evaluators:** Proof of Panic is currently a **research prototype** and stress-testing framework, not a production-grade perpetual protocol risk engine. The limitations below are documented with brutal honesty to clarify what the system *actually* proves versus what a fully developed version *would* prove.
 
-## 1. Cryptographic Caveats
+## 1. System Architecture & Boundaries
 
-### State Binding
-The system uses SHA-256 to hash the canonical serialization of the `PositionBook` state. The on-chain program verifies that the proof's public inputs match this hash. The ZK proof is executed inside the SP1 zkVM, which natively supports SHA-256 precompiles, certifying that "these simulated positions produce this risk score," and the program asserts "the simulated positions' hash matches the on-chain state hash."
+The system is composed of:
+1. **On-chain Anchor Program**: Maintains risk state, verifies SP1 proofs, and exposes CPI endpoints.
+2. **Keeper Network**: Off-chain Node.js/Rust services that poll on-chain state, run the deterministic Rust Simulator, and submit zero-knowledge proofs.
+3. **SP1 zkVM**: Generates execution proofs for the Rust Simulator.
 
-### Proof Generation Trust
-Currently, proof generation is permissioned to a single administrative authority (`authority`). A malicious or offline admin could selectively withhold proofs that indicate a high risk score, suppressing the circuit breaker. A production implementation requires permissionless proof submission and economic incentives (e.g., bounties) for keepers to generate and submit proofs.
+## 2. Threat Vectors & Mitigations
 
-## 2. Protocol & Financial Limitations
+### 2.1 Forged Proofs & State Mismatch
+- **Threat**: An attacker submits a valid SP1 proof for a simulation that used a fabricated initial state (e.g., claiming all positions are healthy when they are not).
+- **Mitigation**: The on-chain program stores a rolling `state_hash` (a SHA-256 commitment of the position book). The SP1 proof's public inputs must contain this exact hash. If an attacker simulates a different state, the public input hash will mismatch the on-chain hash, and the transaction will be rejected (`InvalidPublicValuesHash`).
 
-### Hardcoded Oracles
-The current simulation relies on a single hardcoded oracle price (`oracle_price`). It does not integrate with live on-chain oracles like Pyth or Switchboard, meaning the simulation does not react to live market conditions. Furthermore, there is no oracle freshness or confidence interval validation.
+### 2.2 Oracle Manipulation
+- **Threat**: An attacker manipulates the Pyth price feed to artificially trigger a circuit breaker.
+- **Mitigation**: The simulator fetches the Pyth price and includes it in the proof. The on-chain program optionally verifies this price against the on-chain Pyth account during `submit_proof_and_verify`. A robust production implementation would require TWAP (Time-Weighted Average Price) checks and confidence interval validation to reject anomalous price spikes.
 
-### Lack of Partial Liquidations & Slippage
-The liquidation engine models liquidations as full closures occurring exactly at the shocked oracle price. Production systems utilize:
-- **Partial liquidations:** Closing only enough of a position to return the margin ratio to healthy levels.
-- **Slippage & Price Impact:** Large liquidations impact the order book, creating slippage. The current engine evaluates all positions against the same static shock price rather than modeling an iterative liquidation cascade where each liquidation worsens the price for subsequent positions.
-- **Fees:** The `liquidation_fee_bps` is currently a dead field; no fees or penalties are deducted during the simulated liquidations.
+### 2.3 Keeper Censorship (Liveness)
+- **Threat**: In a single-keeper architecture, if the keeper goes offline, the circuit breaker will never activate during a crash.
+- **Mitigation**: Proof generation must be permissionless. A decentralized keeper network with leader-election and staking is planned. Keepers would bond tokens and be slashed if they fail to produce a proof within a specific SLA after a significant price movement.
 
-### Position Constraints
-All positions are stored in a single `PositionBook` account with a hardcoded `MAX_POSITIONS = 8`. This creates a severe write-lock bottleneck and limits the protocol from demonstrating actual scalability (e.g., O(log N) verification of O(N) positions). A production system would require per-user margin accounts and concurrent access patterns, likely involving Merkle tree state commitments.
+### 2.4 zkVM Latency Tradeoffs
+- **Threat**: Generating an SP1 proof can take minutes. In a highly volatile market, by the time the proof is generated and verified, the protocol might already be insolvent.
+- **Mitigation**: This is the primary tradeoff of zk-based risk engines. Proof of Panic is designed for *systemic, protocol-level* circuit breakers, not per-user instant liquidations. Future optimizations include hardware acceleration for SP1 and smaller simulation batches.
 
 ## 3. Solana & Smart Contract Architecture
 
 ### Verifier Program
-The `sunspot_verifier` account is constrained to match `SUNSPOT_VERIFIER_PROGRAM_ID`. The verifier itself is a standalone program generated by Sunspot. The system relies entirely on this external verifier for cryptographic soundness.
+The `sunspot_verifier` account is constrained to match `SUNSPOT_VERIFIER_PROGRAM_ID`. The verifier itself is a standalone program generated by Succinct (SP1). The system relies entirely on this external verifier for cryptographic soundness.
 
 ### Public Input Verification
 The on-chain program manually extracts and verifies the public inputs (risk score, bad debt, etc.) from the proof bytes to ensure they match the instruction arguments. This prevents an attacker from submitting a valid proof for a low risk score but passing a high risk score in the instruction arguments to spoof a circuit breaker activation.
@@ -40,4 +43,4 @@ The on-chain program manually extracts and verifies the public inputs (risk scor
 
 ## Summary
 
-Proof of Panic successfully demonstrates the end-to-end architecture of verifiable off-chain compute applied to Solana DeFi risk management. However, bridging the gap between this prototype and a production system requires migrating to a more capable proving backend (e.g., SP1), implementing permissionless keeper mechanics, and drastically increasing the financial realism of the liquidation simulator.
+Proof of Panic successfully demonstrates the end-to-end architecture of verifiable off-chain compute applied to Solana DeFi risk management. However, bridging the gap between this prototype and a production system requires implementing permissionless keeper mechanics, addressing prover latency through hardware acceleration, and drastically increasing the financial realism of the liquidation simulator.

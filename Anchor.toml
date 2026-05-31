@@ -6,6 +6,7 @@ skip-lint = false
 
 [programs.localnet]
 proof_of_panic = "9YGU7h7TCskUQ2BkZfSVCkb66NzJPES5m5QrW8vUw6hE"
+target_perp = "3h1vsZgXrneHjj2hCp4sMgkFhLzNNFwdZAzoEr5oR6pF"
 
 [registry]
 url = "https://api.apr.dev"

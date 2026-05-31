@@ -37,9 +37,9 @@ pub fn main() {
     let state_hash = compute_state_hash(&snapshot.positions);
 
     let post_shock_price = if shock_direction_up {
-        apply_shock_up(snapshot.oracle_price, shock_bps)
+        apply_shock_up(snapshot.oracle_price, shock_bps).expect("math overflow")
     } else {
-        apply_shock(snapshot.oracle_price, shock_bps)
+        apply_shock(snapshot.oracle_price, shock_bps).expect("math overflow")
     };
 
     let mut positions = snapshot.positions.clone();
@@ -47,7 +47,7 @@ pub fn main() {
         &mut positions,
         post_shock_price,
         &snapshot.risk_config,
-    );
+    ).expect("math overflow");
 
     let num_liquidated = position_results.iter().filter(|r| r.is_liquidated).count() as u64;
 

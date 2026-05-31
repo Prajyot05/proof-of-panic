@@ -24,6 +24,13 @@ pub const MAX_POSITIONS: usize = 8;
 /// Position size in bytes (must match on-chain Position layout)
 pub const POSITION_BYTE_SIZE: usize = 64;
 
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub enum SimulatorError {
+    MathOverflow,
+    InvalidScenario,
+}
+
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SimPosition {
     /// Owner pubkey as hex string

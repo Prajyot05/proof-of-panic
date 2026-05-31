@@ -1,7 +1,8 @@
 {
   "pre_shock_price": 150000000,
-  "post_shock_price": 105000000,
+  "post_shock_price": 101850000,
   "shock_bps": 3000,
+  "shock_direction_up": false,
   "position_results": [
     {
       "index": 0,
@@ -9,6 +10,8 @@
       "margin_ratio_bps": 0,
       "is_liquidated": true,
       "liquidation_loss": 28000000000,
+      "liquidation_fee_paid": 3000000000,
+      "liquidated_size": 120000000000,
       "effective_collateral": -28000000000
     },
     {
@@ -17,6 +20,8 @@
       "margin_ratio_bps": 0,
       "is_liquidated": true,
       "liquidation_loss": 25921052631,
+      "liquidation_fee_paid": 2500000000,
+      "liquidated_size": 100000000000,
       "effective_collateral": -25921052631
     },
     {
@@ -25,6 +30,8 @@
       "margin_ratio_bps": 0,
       "is_liquidated": true,
       "liquidation_loss": 19243243243,
+      "liquidation_fee_paid": 2000000000,
+      "liquidated_size": 80000000000,
       "effective_collateral": -19243243243
     },
     {
@@ -33,6 +40,8 @@
       "margin_ratio_bps": 0,
       "is_liquidated": true,
       "liquidation_loss": 21193548387,
+      "liquidation_fee_paid": 1875000000,
+      "liquidated_size": 75000000000,
       "effective_collateral": -21193548387
     },
     {
@@ -41,6 +50,8 @@
       "margin_ratio_bps": 0,
       "is_liquidated": true,
       "liquidation_loss": 14772151898,
+      "liquidation_fee_paid": 1250000000,
+      "liquidated_size": 50000000000,
       "effective_collateral": -14772151898
     },
     {
@@ -49,6 +60,8 @@
       "margin_ratio_bps": 0,
       "is_liquidated": true,
       "liquidation_loss": 19714285714,
+      "liquidation_fee_paid": 2250000000,
+      "liquidated_size": 90000000000,
       "effective_collateral": -19714285714
     },
     {
@@ -57,6 +70,8 @@
       "margin_ratio_bps": 0,
       "is_liquidated": true,
       "liquidation_loss": 18460784313,
+      "liquidation_fee_paid": 1750000000,
+      "liquidated_size": 70000000000,
       "effective_collateral": -18460784313
     },
     {
@@ -65,13 +80,16 @@
       "margin_ratio_bps": 0,
       "is_liquidated": true,
       "liquidation_loss": 11390625000,
+      "liquidation_fee_paid": 937500000,
+      "liquidated_size": 37500000000,
       "effective_collateral": -11390625000
     }
   ],
   "num_liquidated": 8,
   "total_losses": 158695691186,
+  "total_fees_collected": 15562500000,
   "insurance_fund_remaining": 0,
-  "total_bad_debt": 108695691186,
+  "total_bad_debt": 93133191186,
   "risk_score": 1000000,
   "protocol_solvent": false,
   "state_hash": [

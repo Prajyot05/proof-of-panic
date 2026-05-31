@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "programs/proof-of-panic",
+    "programs/target-perp",
     "simulator",
 ]
 resolver = "2"
