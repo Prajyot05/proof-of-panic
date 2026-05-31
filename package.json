@@ -24,6 +24,7 @@
   },
   "workspaces": [
     "app",
-    "packages/sdk"
+    "packages/sdk",
+    "keeper"
   ]
 }

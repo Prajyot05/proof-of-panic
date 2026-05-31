@@ -6,8 +6,16 @@ This document covers the operational requirements for running the **Proof of Pan
 
 The architecture consists of two primary components requiring private keys:
 
-### A. The Keeper Bot (`keeper/`)
-The Keeper is a background service that polls Pyth prices, evaluates market conditions off-chain using the `simulator`, generates SP1 proofs, and submits them on-chain.
+### A. The Keeper
+#### Option A: Render (Free Web Service / Background Worker)
+1. Sign up on [Render.com](https://render.com/).
+2. Click **New +** -> **Web Service** (or Background Worker).
+3. Connect your GitHub Repository.
+4. Configure the service:
+   - **Root Directory:** *(Leave this completely empty!)*
+   - **Build Command:** `npm install && cd packages/sdk && npm run build`
+   - **Start Command:** `cd keeper && npm start`
+   - **Instance Type:** **Free**
 
 **Security:**
 - The Keeper needs a funded Solana wallet to pay for gas fees.
