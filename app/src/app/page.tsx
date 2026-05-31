@@ -62,10 +62,10 @@ function HealthMeter({ riskScore, cbActive }: { riskScore: number; cbActive: boo
   const status = cbActive
     ? "CIRCUIT BREAKER"
     : pct >= 70
-    ? "CRITICAL RISK"
-    : pct >= 40
-    ? "ELEVATED RISK"
-    : "PROTOCOL SAFE";
+      ? "CRITICAL RISK"
+      : pct >= 40
+        ? "ELEVATED RISK"
+        : "PROTOCOL SAFE";
 
   return (
     <motion.div variants={fadeUp} className="surface-card health-meter">
@@ -91,8 +91,8 @@ function HealthMeter({ riskScore, cbActive }: { riskScore: number; cbActive: boo
           />
         </svg>
         <div className="meter-center">
-          <motion.div 
-            className="meter-value" 
+          <motion.div
+            className="meter-value"
             style={{ color: "var(--text-primary)" }}
             key={pct}
             initial={{ opacity: 0.5 }}
@@ -329,7 +329,7 @@ function ProofPanel({ scenario }: { scenario: ScenarioData }) {
           </motion.div>
         ))}
       </motion.div>
-      
+
       <div className="proof-action-container">
         <button
           onClick={verifyOnChain}
@@ -364,7 +364,7 @@ function CircuitBreakerBanner({ scenario }: { scenario: ScenarioData }) {
   const cbFires = scenario.result.risk_score > CB_THRESHOLD;
 
   return (
-    <motion.div 
+    <motion.div
       variants={fadeUp}
       className={`circuit-breaker-banner ${cbFires ? "active" : ""}`}
     >
@@ -377,13 +377,13 @@ function CircuitBreakerBanner({ scenario }: { scenario: ScenarioData }) {
             {cbFires ? "Circuit Breaker Activated" : "Protocol Defended"}
           </div>
           <div className="breaker-desc">
-            {cbFires 
+            {cbFires
               ? "Risk threshold exceeded. Exposure reduced automatically."
               : "Insurance fund absorbed losses. No emergency action required."}
           </div>
         </div>
       </div>
-      
+
       <div className="breaker-details">
         {cbFires ? (
           <>
@@ -469,7 +469,7 @@ function SummaryStats({ scenario }: { scenario: ScenarioData }) {
 // ─── Metrics Bar ───
 function MetricsBar({ stateHash }: { stateHash?: number[] }) {
   const hashShort = stateHash ? "0x" + stateHash.slice(0, 8).map((b: unknown) => (b as number).toString(16).padStart(2, "0")).join("") : "N/A";
-  
+
   const metrics = [
     { label: "STATE HASH", value: hashShort },
     { label: "SLOT", value: "2,398,128" },
@@ -546,7 +546,7 @@ export default function WarRoom() {
     setIsSimulating(true);
     setLogs([]);
     addLog(`Initiating scenario: ${activeScenario}`, "highlight");
-    
+
     // Simulate real pipeline latency
     setTimeout(() => addLog("Connecting to Solana RPC...", "normal"), 300);
     setTimeout(() => addLog("Exporting open positions from PositionBook PDA...", "normal"), 600);
@@ -558,7 +558,7 @@ export default function WarRoom() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ scenarioId: activeScenario }),
       });
-      
+
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
 
@@ -569,32 +569,32 @@ export default function WarRoom() {
       const shockPct = data.result.shock_bps / 100;
       const numLiquidated = data.result.num_liquidated;
       const badDebt = formatUsd(data.result.total_bad_debt);
-      
+
       addLog(`Applying market shock: SOL ${direction}${shockPct}% (${prePrice} -> ${postPrice})`, "warning");
-      
+
       setTimeout(() => {
         addLog("Running liquidation cascade engine...", "normal");
-        
+
         setTimeout(() => {
           addLog(`Cascade complete: ${numLiquidated} liquidated, ${badDebt} bad debt`, "warning");
-          
+
           setTimeout(() => {
             addLog("Generating SP1 ZK witness (14 public inputs, 320 private)...", "highlight");
-            
+
             setTimeout(() => {
               addLog("Compiling SP1 ELF (~31,000 gates)...", "normal");
-              
+
               setTimeout(() => {
                 const rs = (data.result.risk_score / 10000).toFixed(1);
                 addLog(`Risk score: ${rs}% (threshold: ${(CB_THRESHOLD / 10000).toFixed(1)}%)`, "error");
-                
+
                 if (data.result.risk_score > CB_THRESHOLD) {
                   addLog("CIRCUIT BREAKER TRIGGERED: max leverage halved", "error");
                 }
-                
+
                 setTimeout(() => {
                   addLog("Proof ready for on-chain verification (~200K CU)", "success");
-                  
+
                   // Finally show the UI
                   setScenarioData({
                     id: data.scenarioId,
@@ -626,15 +626,23 @@ export default function WarRoom() {
     <div className="war-room">
       {/* Header */}
       <header className="header">
-        <div className="header-brand">
-          <div className="header-logo">
-            <img src="/logo.png" alt="Proof of Panic Logo" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+        <Link
+          href="/"
+          style={{
+            textDecoration: "none",
+            color: "inherit",
+          }}
+        >
+          <div className="header-brand">
+            <div className="header-logo">
+              <img src="/logo.png" alt="Proof of Panic Logo" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+            </div>
+            <div>
+              <div className="header-title">Proof of Panic</div>
+              <div className="header-subtitle">Institutional Risk Terminal</div>
+            </div>
           </div>
-          <div>
-            <div className="header-title">Proof of Panic</div>
-            <div className="header-subtitle">Institutional Risk Terminal</div>
-          </div>
-        </div>
+        </Link>
         <div className="header-actions">
           <Link href="/architecture" className="integrate-btn" style={{ background: "transparent", border: "1px solid var(--border-subtle)", color: "var(--text-secondary)" }}>
             <Network size={14} /> Architecture
@@ -680,8 +688,8 @@ export default function WarRoom() {
               ZK-Verified Risk Engine <br />for Solana Perps
             </h1>
             <p style={{ fontSize: "1.2rem", color: "var(--text-secondary)", maxWidth: 700, margin: "0 auto", lineHeight: 1.6 }}>
-              Trustless, automated circuit breakers powered by SP1 zero-knowledge proofs. 
-              Simulate adversarial market crashes off-chain, prove correctness cryptographically, 
+              Trustless, automated circuit breakers powered by SP1 zero-knowledge proofs.
+              Simulate adversarial market crashes off-chain, prove correctness cryptographically,
               verify on-chain for ~200,000 compute units.
             </p>
           </motion.div>
@@ -726,7 +734,7 @@ export default function WarRoom() {
               )}
             </button>
           </div>
-          
+
           {logs.length > 0 && (
             <div style={{ maxWidth: 600, margin: "2rem auto 0" }}>
               <TerminalFeed logs={logs} />
@@ -737,7 +745,7 @@ export default function WarRoom() {
       ) : (
         <AnimatePresence mode="wait">
           {scenarioData && (
-            <motion.div 
+            <motion.div
               key={scenarioData.id}
               variants={staggerContainer}
               initial="hidden"
@@ -769,7 +777,7 @@ export default function WarRoom() {
               </div>
 
               <MetricsBar stateHash={scenarioData.result.state_hash} />
-              
+
               <TerminalFeed logs={logs} />
             </motion.div>
           )}

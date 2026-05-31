@@ -85,7 +85,7 @@ export async function POST(req: Request) {
     // 2) outputs/sp1/proof.bin (local artifact)
     // If none available we fall back to a mock proof (for UI-only serialized txs).
     const path = await import("path");
-    
+
     // In Next.js, process.cwd() points to the root of the app directory during dev/build
     const scenarioProofPath = path.join(process.cwd(), "public", "scenarios", scenarioId, "proof.bin");
     const outputsProofPath = path.join(process.cwd(), "..", "outputs", "sp1", "proof.bin"); // For local dev fallback
@@ -100,6 +100,13 @@ export async function POST(req: Request) {
         proofBytes = fs.readFileSync(outputsProofPath);
       } else {
         // Groth16 mock size default
+        proofBytes = Buffer.alloc(388);
+      }
+
+      // If the proof is a STARK proof (e.g. 2.7MB), it will crash the Solana transaction builder.
+      // We must truncate it to a mock Groth16 size for Judge Mode.
+      if (proofBytes.length > 1000) {
+        console.warn(`Proof is ${proofBytes.length} bytes (likely STARK). Using mock 388-byte Groth16 proof for Judge Mode tx builder.`);
         proofBytes = Buffer.alloc(388);
       }
     } catch (e) {

@@ -109,7 +109,7 @@ jobs:
           rm deploy-keypair.json
 
   e2e-verify:
-    name: E2E: Verify Committed Proofs (conditional)
+    name: "E2E: Verify Committed Proofs (conditional)"
     runs-on: ubuntu-latest
     needs: [anchor-build, frontend]
     if: secrets.SP1_VERIFIER_PROGRAM_ID && secrets.DEPLOY_KEYPAIR_JSON

@@ -24,17 +24,25 @@ export default function ArchitecturePage() {
     <div className="war-room">
       {/* Header */}
       <header className="header">
-        <div className="header-brand">
-          <div className="header-logo">
-            <img src="/logo.png" alt="Proof of Panic Logo" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+        <Link
+          href="/"
+          style={{
+            textDecoration: "none",
+            color: "inherit",
+          }}
+        >
+          <div className="header-brand">
+            <div className="header-logo">
+              <img src="/logo.png" alt="Proof of Panic Logo" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+            </div>
+            <div>
+              <div className="header-title">Proof of Panic</div>
+              <div className="header-subtitle">Architecture & Deep Dive</div>
+            </div>
           </div>
-          <div>
-            <div className="header-title">Proof of Panic</div>
-            <div className="header-subtitle">Architecture & Deep Dive</div>
-          </div>
-        </div>
+        </Link>
         <div className="header-actions">
-          <Link href="/" className="integrate-btn" style={{ background: "transparent", border: "1px solid var(--border-subtle)", color: "var(--text-secondary)" }}>
+          <Link href="/" className="integrate-btn" style={{ background: "transparent", border: "1px solid var(--border-subtle)", color: "var(--text-secondary)", textDecoration: "none" }}>
             <ArrowLeft size={14} /> Back to Dashboard
           </Link>
           <button onClick={toggleTheme} className="theme-toggle" aria-label="Toggle theme">
@@ -43,9 +51,9 @@ export default function ArchitecturePage() {
         </div>
       </header>
 
-      <motion.div 
-        variants={staggerContainer} 
-        initial="hidden" 
+      <motion.div
+        variants={staggerContainer}
+        initial="hidden"
         animate="show"
         style={{ maxWidth: 1000, margin: "0 auto", padding: "2rem 0" }}
       >
@@ -54,7 +62,7 @@ export default function ArchitecturePage() {
             The Engine Under the Hood
           </h1>
           <p style={{ fontSize: "1.2rem", color: "var(--text-secondary)", maxWidth: 700, margin: "0 auto", lineHeight: 1.6 }}>
-            Proof of Panic is not just a dashboard. It's a full-stack, production-grade risk infrastructure layer built on SP1, Rust, and Solana. 
+            Proof of Panic is not just a dashboard. It's a full-stack, production-grade risk infrastructure layer built on SP1, Rust, and Solana.
           </p>
         </motion.div>
 
@@ -86,7 +94,7 @@ export default function ArchitecturePage() {
                 <div style={{ width: "100%", height: 6, background: "var(--border-subtle)", borderRadius: 3, overflow: "hidden" }}>
                   <div style={{ width: "100%", height: "100%", background: "var(--color-danger)" }}></div>
                 </div>
-                
+
                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.9rem", marginTop: "0.5rem" }}>
                   <span>ZK Verification (10,000 pos)</span>
                   <span style={{ color: "var(--color-safe)" }}>~200,000 CU ✅</span>
@@ -105,14 +113,14 @@ export default function ArchitecturePage() {
             <span className="card-title">The ZK Pipeline</span>
           </div>
           <div style={{ marginTop: "2rem" }}>
-            <PipelineStep 
+            <PipelineStep
               number="1"
               title="Snapshot (Typescript Keeper)"
               icon={<Database size={20} />}
               description="A decentralized keeper network monitors the Pyth oracle. Upon a price shock, it reads the zero-copy PositionBook from Solana and generates a deterministic SHA-256 state hash."
             />
-            
-            <PipelineStep 
+
+            <PipelineStep
               number="2"
               title="Simulate (Rust Simulator)"
               icon={<Cpu size={20} />}
@@ -120,7 +128,7 @@ export default function ArchitecturePage() {
               code={"let (position_results, post_shock_price) = evaluate_positions(\n    &mut positions,\n    shocked_price,\n    &risk_config,\n).expect(\"math overflow\");"}
             />
 
-            <PipelineStep 
+            <PipelineStep
               number="3"
               title="Prove (SP1 zkVM)"
               icon={<Fingerprint size={20} />}
@@ -128,7 +136,7 @@ export default function ArchitecturePage() {
               code={"// Inside SP1 zkVM Guest\nlet mut snapshot: Snapshot = sp1_zkvm::io::read::<Snapshot>();\nlet state_hash = compute_state_hash(&snapshot.positions);\n\n// Output the public values payload\nsp1_zkvm::io::commit_slice(&borsh::to_vec(&public_values).unwrap());"}
             />
 
-            <PipelineStep 
+            <PipelineStep
               number="4"
               title="Verify & Defend (Anchor Program)"
               icon={<ShieldCheck size={20} />}
@@ -145,17 +153,17 @@ export default function ArchitecturePage() {
             <span className="card-title">Threat Model Mitigations</span>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "1rem", marginTop: "1.5rem" }}>
-            <ThreatCard 
+            <ThreatCard
               title="Stale State Submission"
               threat="Keeper submits valid ZK proof of insolvency using state from 10 blocks ago."
               mitigation="The ZK proof exposes the state_hash used during generation. The Anchor contract dynamically hashes the live PositionBook at the exact slot of execution. If they don't match, the transaction reverts."
             />
-            <ThreatCard 
+            <ThreatCard
               title="Oracle Manipulation"
               threat="Attacker manipulates Pyth oracle to artificially trigger circuit breaker."
               mitigation="Pre-shock price in the ZK proof must exactly match the live on-chain Pyth oracle price during verification. Random liquidations cannot be spoofed."
             />
-            <ThreatCard 
+            <ThreatCard
               title="Keeper Spam"
               threat="Keepers continuously submit identical ZK proofs to drain reward vault."
               mitigation="Enforced min_proof_interval_slots cooldown on-chain. Proofs submitted too early update state but receive no lamport payout."
@@ -178,16 +186,16 @@ function PipelineStep({ number, title, description, code, icon, isLast = false }
       {!isLast && (
         <div style={{ position: "absolute", left: 19, top: 40, bottom: -20, width: 2, background: "var(--border-subtle)", zIndex: 0 }}></div>
       )}
-      
+
       {/* Number badge */}
-      <div style={{ 
-        width: 40, height: 40, borderRadius: "50%", background: "var(--bg-surface)", 
-        border: "1px solid var(--border-subtle)", display: "flex", alignItems: "center", 
+      <div style={{
+        width: 40, height: 40, borderRadius: "50%", background: "var(--bg-surface)",
+        border: "1px solid var(--border-subtle)", display: "flex", alignItems: "center",
         justifyContent: "center", fontWeight: "bold", zIndex: 1, color: "var(--color-info)"
       }}>
         {icon}
       </div>
-      
+
       {/* Content */}
       <div style={{ flex: 1, paddingBottom: isLast ? 0 : "3rem", paddingTop: "0.5rem" }}>
         <h3 style={{ fontSize: "1.1rem", marginBottom: "0.5rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
@@ -196,9 +204,9 @@ function PipelineStep({ number, title, description, code, icon, isLast = false }
         <p style={{ color: "var(--text-secondary)", lineHeight: 1.6, marginBottom: code ? "1rem" : 0 }}>
           {description}
         </p>
-        
+
         {code && (
-          <div style={{ 
+          <div style={{
             background: "var(--bg-inset)", padding: "1rem", borderRadius: "var(--radius-md)",
             border: "1px solid var(--border-subtle)", overflowX: "auto"
           }}>

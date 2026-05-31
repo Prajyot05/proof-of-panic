@@ -2,9 +2,10 @@
 
 /* ── Base Theme Variables (Minimalist Light Mode Default) ── */
 :root {
-  --bg-primary: #ffffff;
-  --bg-secondary: #f4f4f5;
+  --bg-primary: #f4f4f5;
+  --bg-secondary: #e4e4e7;
   --bg-surface: #ffffff;
+  --bg-inset: #f8fafc;
   --bg-hover: #e4e4e7;
 
   --text-primary: #18181b;
@@ -39,12 +40,12 @@
   --radius-full: 9999px;
 }
 
-/* ── Dark Theme (Minimalist Matte - Reduced Contrast) ── */
+/* ── Dark Theme (Minimalist Matte) ── */
 [data-theme='dark'] {
-  /* Using #0f0f11 instead of pure black to reduce eye strain */
-  --bg-primary: #0f0f11;
-  --bg-secondary: #18181b;
-  --bg-surface: #0f0f11;
+  --bg-primary: #000000;
+  --bg-secondary: #09090b;
+  --bg-surface: #18181b;
+  --bg-inset: #09090b;
   --bg-hover: #27272a;
 
   /* Slightly softened white */
@@ -255,9 +256,16 @@ body {
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
   padding: 1.5rem;
   display: flex;
   flex-direction: column;
+}
+
+.surface-card .surface-card,
+.surface-card .surface-card-inset {
+  background: var(--bg-inset) !important;
+  box-shadow: none;
 }
 
 .card-header {

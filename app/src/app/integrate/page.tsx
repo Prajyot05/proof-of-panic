@@ -92,17 +92,25 @@ if (state.circuitBreakerActive) {
   return (
     <div className="war-room">
       <header className="header">
-        <div className="header-brand">
-          <div className="header-logo">
-            <img src="/logo.png" alt="Proof of Panic Logo" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+        <Link
+          href="/"
+          style={{
+            textDecoration: "none",
+            color: "inherit",
+          }}
+        >
+          <div className="header-brand">
+            <div className="header-logo">
+              <img src="/logo.png" alt="Proof of Panic Logo" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+            </div>
+            <div>
+              <div className="header-title">Proof of Panic</div>
+              <div className="header-subtitle">Integration Guide</div>
+            </div>
           </div>
-          <div>
-            <div className="header-title">Proof of Panic</div>
-            <div className="header-subtitle">Integration Guide</div>
-          </div>
-        </div>
+        </Link>
         <div className="header-actions">
-          <Link href="/" className="integrate-btn" style={{ background: "transparent", border: "1px solid var(--border-subtle)", color: "var(--text-secondary)" }}>
+          <Link href="/" className="integrate-btn" style={{ background: "transparent", border: "1px solid var(--border-subtle)", color: "var(--text-secondary)", textDecoration: "none" }}>
             <ArrowLeft size={14} /> Back to Dashboard
           </Link>
           <button onClick={toggleTheme} className="theme-toggle">
@@ -136,21 +144,21 @@ if (state.circuitBreakerActive) {
           </div>
           <div className="timeline" style={{ marginTop: "1rem" }}>
             <div className="timeline-event event-shock">
-              <div className="timeline-icon-container">1</div>
+              <div className="timeline-icon-container"></div>
               <div className="timeline-content">
                 <div className="timeline-title">Risk Oracle Monitoring</div>
                 <div className="timeline-detail">Our network of keepers simulates market crashes off-chain. If they prove a SOL crash causes insolvency, they generate an SP1 ZK-proof.</div>
               </div>
             </div>
             <div className="timeline-event event-breaker">
-              <div className="timeline-icon-container">2</div>
+              <div className="timeline-icon-container"></div>
               <div className="timeline-content">
                 <div className="timeline-title">Circuit Breaker Activation</div>
                 <div className="timeline-detail">When a valid proof is verified on-chain via the Anchor program, our circuit_breaker_active flag is flipped to true.</div>
               </div>
             </div>
             <div className="timeline-event event-safe">
-              <div className="timeline-icon-container">3</div>
+              <div className="timeline-icon-container"></div>
               <div className="timeline-content">
                 <div className="timeline-title">Protocol Integration (You)</div>
                 <div className="timeline-detail">Your protocol reads this flag via CPI or TS SDK. If active, you automatically pause operations or enforce tighter margin requirements.</div>
@@ -167,26 +175,26 @@ if (state.circuitBreakerActive) {
         >
           <div className="card-header" style={{ borderBottom: "1px solid var(--border-subtle)", paddingBottom: "1rem", marginBottom: "1rem" }}>
             <div style={{ display: "flex", gap: "1rem" }}>
-              <button 
+              <button
                 onClick={() => setActiveTab("rust")}
-                style={{ 
-                  background: "transparent", border: "none", color: activeTab === "rust" ? "var(--text-primary)" : "var(--text-muted)", 
-                  fontWeight: activeTab === "rust" ? 600 : 400, cursor: "pointer", fontSize: "1rem", display: "flex", alignItems: "center", gap: "0.5rem" 
+                style={{
+                  background: "transparent", border: "none", color: activeTab === "rust" ? "var(--text-primary)" : "var(--text-muted)",
+                  fontWeight: activeTab === "rust" ? 600 : 400, cursor: "pointer", fontSize: "1rem", display: "flex", alignItems: "center", gap: "0.5rem"
                 }}
               >
                 <Code size={18} className={activeTab === "rust" ? "icon-emerald" : ""} /> Anchor CPI
               </button>
-              <button 
+              <button
                 onClick={() => setActiveTab("ts")}
-                style={{ 
-                  background: "transparent", border: "none", color: activeTab === "ts" ? "var(--text-primary)" : "var(--text-muted)", 
-                  fontWeight: activeTab === "ts" ? 600 : 400, cursor: "pointer", fontSize: "1rem", display: "flex", alignItems: "center", gap: "0.5rem" 
+                style={{
+                  background: "transparent", border: "none", color: activeTab === "ts" ? "var(--text-primary)" : "var(--text-muted)",
+                  fontWeight: activeTab === "ts" ? 600 : 400, cursor: "pointer", fontSize: "1rem", display: "flex", alignItems: "center", gap: "0.5rem"
                 }}
               >
                 <Cpu size={18} className={activeTab === "ts" ? "icon-blue" : ""} /> Typescript SDK
               </button>
             </div>
-            <button 
+            <button
               onClick={() => copyCode(activeTab === "rust" ? CPI_CODE : TS_CODE, activeTab)}
               className="copy-btn"
               title="Copy code"
@@ -194,7 +202,7 @@ if (state.circuitBreakerActive) {
               {(activeTab === "rust" ? copiedRust : copiedTS) ? <Check size={16} className="icon-emerald" /> : <Copy size={16} />}
             </button>
           </div>
-          
+
           <div className="code-block-container" style={{ background: "#0d1117", minHeight: "350px" }}>
             {activeTab === "rust" ? (
               <code dangerouslySetInnerHTML={highlightRust(CPI_CODE)} />
