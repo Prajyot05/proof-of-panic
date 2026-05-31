@@ -112,7 +112,6 @@ jobs:
     name: "E2E: Verify Committed Proofs (conditional)"
     runs-on: ubuntu-latest
     needs: [anchor-build, frontend]
-    if: secrets.SP1_VERIFIER_PROGRAM_ID && secrets.DEPLOY_KEYPAIR_JSON
     steps:
       - uses: actions/checkout@v4
 
@@ -127,9 +126,14 @@ jobs:
       - name: Run verification script
         env:
           SP1_VERIFIER_PROGRAM_ID: ${{ secrets.SP1_VERIFIER_PROGRAM_ID }}
+          DEPLOY_KEYPAIR_JSON: ${{ secrets.DEPLOY_KEYPAIR_JSON }}
           HOME: ${{ runner.temp }}
           RPC_URL: https://api.devnet.solana.com
         run: |
+          if [ -z "$SP1_VERIFIER_PROGRAM_ID" ] || [ -z "$DEPLOY_KEYPAIR_JSON" ]; then
+            echo "Secrets not available, skipping E2E verification."
+            exit 0
+          fi
           # Write a temporary keypair (must be funded on devnet by the repo owner)
-          echo '${{ secrets.DEPLOY_KEYPAIR_JSON }}' > $HOME/deploy-keypair.json
+          echo "$DEPLOY_KEYPAIR_JSON" > $HOME/deploy-keypair.json
           npx tsx ./scripts/ci-verify.ts || (echo "E2E verify failed" && exit 1)
