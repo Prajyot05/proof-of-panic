@@ -160,6 +160,17 @@ async function main() {
       accounts.pythOracle = new web3.PublicKey(pythPriceAccount);
     }
 
+    // Include admin account (protocol authority) in the accounts list for optional
+    // governance gating. Use the authority from on-chain global state if available.
+    try {
+      const authorityKey = (preStateLog as any).authority;
+      if (authorityKey) {
+        accounts.admin = new web3.PublicKey(authorityKey);
+      }
+    } catch (e) {
+      // ignore; not critical for mock runs
+    }
+
     const tx = await program.methods
       .submitProofAndVerify(
         Buffer.from(proofBytes),

@@ -2,35 +2,56 @@ import { NextResponse } from "next/server";
 import { Connection, Keypair, PublicKey, Transaction } from "@solana/web3.js";
 import { Program, AnchorProvider } from "@coral-xyz/anchor";
 import NodeWallet from "@coral-xyz/anchor/dist/cjs/nodewallet";
-import { ProofOfPanicClient, PublicValuesLayout, idl } from "@proof-of-panic/sdk";
+import {
+  ProofOfPanicClient,
+  PublicValuesLayout,
+  idl,
+} from "@proof-of-panic/sdk";
 import BN from "bn.js";
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { scenarioId, riskScore, badDebt, numLiquidated, stateHash, shockDirectionUp } = body;
+    const {
+      scenarioId,
+      riskScore,
+      badDebt,
+      numLiquidated,
+      stateHash,
+      shockDirectionUp,
+    } = body;
 
     if (!scenarioId) {
-      return NextResponse.json({ error: "Missing scenarioId" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Missing scenarioId" },
+        { status: 400 },
+      );
     }
 
-    // In a real environment, this route would be called by Keeper bots who have 
+    // In a real environment, this route would be called by Keeper bots who have
     // generated SP1 ZK proofs. They would pass the raw proof bytes.
     // For Judge Mode, we simulate proof generation and submission on devnet.
-    
+
     // Use a random keypair or a configured Devnet keypair for Judge Mode
     const privateKey = process.env.JUDGE_MODE_PRIVATE_KEY;
     let wallet: NodeWallet;
     if (privateKey) {
-      wallet = new NodeWallet(Keypair.fromSecretKey(new Uint8Array(JSON.parse(privateKey))));
+      wallet = new NodeWallet(
+        Keypair.fromSecretKey(new Uint8Array(JSON.parse(privateKey))),
+      );
     } else {
       // Fallback: use a random wallet (transaction will fail on-chain if no SOL)
       // but we can return the serialized transaction for the UI to show.
       wallet = new NodeWallet(Keypair.generate());
     }
 
-    const connection = new Connection(process.env.RPC_URL || "http://127.0.0.1:8899", "confirmed");
-    const provider = new AnchorProvider(connection, wallet, { commitment: "confirmed" });
+    const connection = new Connection(
+      process.env.RPC_URL || "http://127.0.0.1:8899",
+      "confirmed",
+    );
+    const provider = new AnchorProvider(connection, wallet, {
+      commitment: "confirmed",
+    });
     const client = new ProofOfPanicClient(provider);
 
     // Get PDAs
@@ -56,21 +77,46 @@ export async function POST(req: Request) {
     };
 
     const publicInputsBuf = client.encodePublicValues(publicValues);
-    const mockProofBytes = Buffer.alloc(388); // Groth16 mock size
+
+    // Attempt to load a committed proof for this scenario. Priority:
+    // 1) app/public/scenarios/<scenarioId>/proof.bin
+    // 2) outputs/sp1/proof.bin (local artifact)
+    // If none available we fall back to a mock proof (for UI-only serialized txs).
+    const scenarioProofPath = `./app/public/scenarios/${scenarioId}/proof.bin`;
+    const outputsProofPath = `./outputs/sp1/proof.bin`;
+    let proofBytes: Buffer;
+    try {
+      // Try scenario-local proof first
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const fs = await import("fs");
+      if (fs.existsSync(scenarioProofPath)) {
+        proofBytes = fs.readFileSync(scenarioProofPath);
+      } else if (fs.existsSync(outputsProofPath)) {
+        proofBytes = fs.readFileSync(outputsProofPath);
+      } else {
+        // Groth16 mock size default
+        proofBytes = Buffer.alloc(388);
+      }
+    } catch (e) {
+      // Fallback to mock when filesystem is unavailable in the runtime environment
+      proofBytes = Buffer.alloc(388);
+    }
 
     const SP1_VERIFIER_PROGRAM_ID = new PublicKey(
-      process.env.SP1_VERIFIER_PROGRAM_ID || "11111111111111111111111111111111"
+      process.env.SP1_VERIFIER_PROGRAM_ID || "11111111111111111111111111111111",
     );
 
     // Build the transaction
     const tx = await (client.program as any).methods
-      .submitProofAndVerify(mockProofBytes, publicInputsBuf, shockDirectionUp)
+      .submitProofAndVerify(proofBytes, publicInputsBuf, shockDirectionUp)
       .accounts({
         submitter: wallet.publicKey,
         globalState: pdas.globalStatePda,
         riskConfig: pdas.riskConfigPda,
         positionBook: pdas.positionBookPda,
         sp1Verifier: SP1_VERIFIER_PROGRAM_ID,
+        // Admin account placeholder: using the same wallet as submitter in Judge Mode.
+        admin: wallet.publicKey,
         pythOracle: null,
         systemProgram: PublicKey.default, // web3.SystemProgram.programId
       })

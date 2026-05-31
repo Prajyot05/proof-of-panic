@@ -34,13 +34,15 @@ pub fn handler(ctx: Context<InitializeProtocol>) -> Result<()> {
     risk_config.insurance_fund_target = DEFAULT_INSURANCE_FUND;
     risk_config.circuit_breaker_threshold = DEFAULT_CB_THRESHOLD;
     risk_config.shock_magnitude_bps = DEFAULT_SHOCK_BPS;
+    risk_config.require_admin_approval = false;
     risk_config.bump = ctx.bumps.risk_config;
 
     // ── PositionBook ──
     // Zero-copy account is initialized with all zeros by the `zero` constraint.
     // No additional initialization needed.
 
-    msg!("✓ Protocol initialized | Price: ${} | Insurance: ${} | Max Leverage: {}x",
+    msg!(
+        "✓ Protocol initialized | Price: ${} | Insurance: ${} | Max Leverage: {}x",
         global_state.oracle_price / SCALE,
         global_state.insurance_fund / SCALE,
         global_state.max_leverage / SCALE,

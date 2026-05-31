@@ -11,18 +11,18 @@ describe("Security & Negative Tests", () => {
 
   const program = anchor.workspace.ProofOfPanic as Program<ProofOfPanic>;
   const client = new ProofOfPanicClient(provider);
-  
+
   const { globalStatePda, riskConfigPda, positionBookPda } = client.getPDAs();
-  
+
   const SP1_VERIFIER_PROGRAM_ID = new PublicKey(
-    process.env.SP1_VERIFIER_PROGRAM_ID || "11111111111111111111111111111111"
+    process.env.SP1_VERIFIER_PROGRAM_ID || "11111111111111111111111111111111",
   );
 
   it("Rejects forged risk score with valid SP1 proof format", async () => {
     // Generate some fake proof bytes
     const fakeProof = Buffer.from("forged_proof_data");
     const fakeInputs = Buffer.from("forged_public_inputs");
-    
+
     try {
       await program.methods
         .submitProofAndVerify(fakeProof, fakeInputs, 0)
@@ -32,17 +32,19 @@ describe("Security & Negative Tests", () => {
           riskConfig: riskConfigPda,
           positionBook: positionBookPda,
           sp1Verifier: SP1_VERIFIER_PROGRAM_ID,
+          // admin placeholder: tests run as the provider wallet which is also authority
+          admin: provider.wallet.publicKey,
           pythOracle: null,
           systemProgram: PublicKey.default,
         })
         .rpc();
-        
+
       assert.fail("Should have thrown an error for forged proof");
     } catch (err: any) {
       expect(err.message).to.include("InvalidPublicValuesHash");
     }
   });
-  
+
   it("Rejects transaction if pyth oracle account is invalid", async () => {
     // Try to pass an invalid Pyth oracle account
     const invalidPythOracle = anchor.web3.Keypair.generate().publicKey;
@@ -58,11 +60,12 @@ describe("Security & Negative Tests", () => {
           riskConfig: riskConfigPda,
           positionBook: positionBookPda,
           sp1Verifier: SP1_VERIFIER_PROGRAM_ID,
+          admin: provider.wallet.publicKey,
           pythOracle: invalidPythOracle, // Malicious account
           systemProgram: PublicKey.default,
         })
         .rpc();
-        
+
       assert.fail("Should have thrown an error for invalid oracle");
     } catch (err: any) {
       // The error comes from Pyth SDK failing to parse the invalid account data,
@@ -87,16 +90,19 @@ describe("Security & Negative Tests", () => {
           riskConfig: riskConfigPda,
           positionBook: positionBookPda,
           sp1Verifier: fakeVerifier,
+          admin: provider.wallet.publicKey,
           pythOracle: null,
           systemProgram: PublicKey.default,
         })
         .rpc();
-        
+
       assert.fail("Should have thrown an error for wrong verifier");
     } catch (err: any) {
       // Depending on whether `test-mock-verify` feature is on during this test run,
       // it might fail at constraint validation.
-      expect(err.message).to.match(/ConstraintAddress|InvalidVerifierProgram|InvalidPublicValuesHash/);
+      expect(err.message).to.match(
+        /ConstraintAddress|InvalidVerifierProgram|InvalidPublicValuesHash/,
+      );
     }
   });
 });

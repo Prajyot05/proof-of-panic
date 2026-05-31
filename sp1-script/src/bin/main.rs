@@ -1,10 +1,15 @@
 //! SP1 Host Script for Proof of Panic
-use sp1_sdk::{blocking::{ProverClient, Prover, ProveRequest}, SP1Stdin, include_elf, Elf, ProvingKey, HashableKey};
-use sha2::{Digest, Sha256};
-use std::fs;
-use std::path::PathBuf;
+use anyhow::Context;
+use anyhow::Result;
 use clap::Parser;
 use panic_simulator::types::Snapshot;
+use sha2::{Digest, Sha256};
+use sp1_sdk::{
+    blocking::{ProveRequest, Prover, ProverClient},
+    include_elf, Elf, HashableKey, ProvingKey, SP1Stdin,
+};
+use std::fs;
+use std::path::PathBuf;
 
 // The ELF we want to execute inside the zkVM.
 const ELF: Elf = include_elf!("panic-sp1-program");
@@ -23,18 +28,19 @@ struct Args {
 
     #[arg(long, default_value_t = false)]
     cache: bool,
-    
+
     #[arg(long)]
     output: Option<PathBuf>,
 }
 
-fn main() {
+fn main() -> Result<()> {
     sp1_sdk::utils::setup_logger();
     let args = Args::parse();
 
     // Read the snapshot
-    let snapshot_json = fs::read_to_string(&args.snapshot).expect("Failed to read snapshot");
-    let snapshot: Snapshot = serde_json::from_str(&snapshot_json).expect("Failed to parse snapshot");
+    let snapshot_json = fs::read_to_string(&args.snapshot).context("Failed to read snapshot")?;
+    let snapshot: Snapshot =
+        serde_json::from_str(&snapshot_json).context("Failed to parse snapshot")?;
 
     if args.cache {
         if let Some(output) = &args.output {
@@ -47,7 +53,7 @@ fn main() {
                 let cached_hash = fs::read_to_string(&hash_path).unwrap_or_default();
                 if cached_hash.trim() == input_hash {
                     println!("Using cached proof: {}", input_hash);
-                    return;
+                    return Ok(());
                 }
             }
         }
@@ -63,39 +69,49 @@ fn main() {
     stdin.write(&args.shock_up);
 
     println!("Generating proof...");
-    
-    // Generate the proof (using the default prover, which is usually fast enough for small programs locally)
-    let pk = client.setup(ELF).expect("failed to setup elf");
+
+    // Generate the proof (using the default prover)
+    let pk = client.setup(ELF).context("failed to setup elf")?;
     // Generate Groth16 proof
-    let proof = client.prove(&pk, stdin).groth16().run().expect("failed to generate proof");
+    let proof = client
+        .prove(&pk, stdin)
+        .groth16()
+        .run()
+        .context("failed to generate proof")?;
 
     println!("Successfully generated proof!");
-    
+
     // Verify proof
     let vk = pk.verifying_key();
-    client.verify(&proof, vk, None).expect("failed to verify proof");
-    
+    client
+        .verify(&proof, vk, None)
+        .context("failed to verify proof")?;
+
     println!("Proof verified!");
-    
+
     // Read the public values
     let bytes = proof.public_values.as_slice();
     println!("Public values (hex): {}", hex::encode(bytes));
-    
+
     if let Some(output) = args.output {
-        fs::create_dir_all(&output).unwrap();
+        fs::create_dir_all(&output).context("failed to create output dir")?;
         // Save the proof bytes
-        let proof_bytes = bincode::serialize(&proof).unwrap();
-        fs::write(output.join("proof.bin"), proof_bytes).unwrap();
+        let proof_bytes = bincode::serialize(&proof).context("failed to serialize proof")?;
+        fs::write(output.join("proof.bin"), proof_bytes).context("failed to write proof.bin")?;
         // Save public values separately (borsh-serialized by the guest)
-        fs::write(output.join("public_values.bin"), bytes).unwrap();
+        fs::write(output.join("public_values.bin"), bytes)
+            .context("failed to write public_values.bin")?;
         // Save the verification key
-        fs::write(output.join("vkey.bin"), vk.bytes32()).unwrap();
+        fs::write(output.join("vkey.bin"), vk.bytes32()).context("failed to write vkey.bin")?;
         if args.cache {
             let input_hash = compute_input_hash(&snapshot_json, args.shock_bps, args.shock_up);
-            fs::write(output.join("input_hash.txt"), input_hash).unwrap();
+            fs::write(output.join("input_hash.txt"), input_hash)
+                .context("failed to write input_hash.txt")?;
         }
         println!("Saved proof to {:?}", output);
     }
+
+    Ok(())
 }
 
 fn compute_input_hash(snapshot_json: &str, shock_bps: u64, shock_up: bool) -> String {

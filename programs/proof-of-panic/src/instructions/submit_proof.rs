@@ -153,6 +153,20 @@ pub fn handler(
 
     msg!("✓ Public inputs securely bound to instruction arguments");
 
+    // ── Step 1.7: Governance/Multisig gating (optional) ──
+    // If the risk config requires admin approval for CPI actions, ensure
+    // the provided `admin` account is the protocol authority and signed.
+    #[allow(unused_variables)]
+    if risk_config.require_admin_approval {
+        // `admin` is provided as an extra account in the instruction.
+        let admin_info = ctx.accounts.admin.to_account_info();
+        require!(admin_info.is_signer, PanicError::MissingGovernanceSignature);
+        require!(
+            admin_info.key == global_state.authority,
+            PanicError::InvalidGovernance
+        );
+    }
+
     // ── Step 2: Verify the ZK proof ──
     #[cfg(not(feature = "test-mock-verify"))]
     {
@@ -338,6 +352,11 @@ pub struct SubmitProofAndVerify<'info> {
         bump,
     )]
     pub position_book: AccountLoader<'info, PositionBook>,
+
+    /// Optional admin signer for governance-gated CPI actions.
+    /// CHECK: When `risk_config.require_admin_approval` is true, this must be
+    /// the protocol authority and a signer. Otherwise it can be `SystemProgram`.
+    pub admin: UncheckedAccount<'info>,
 
     #[cfg(not(feature = "test-mock-verify"))]
     /// CHECK: SP1 Verifier Program (Strictly Enforced)

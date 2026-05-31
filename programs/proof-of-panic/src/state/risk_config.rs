@@ -30,6 +30,9 @@ pub struct RiskConfig {
     /// Shock magnitude to simulate in basis points (e.g., 3000 = 30%)
     pub shock_magnitude_bps: u64,
 
+    /// Require governance/admin signature for proofs that trigger CPI actions
+    pub require_admin_approval: bool,
+
     /// PDA bump seed
     pub bump: u8,
 }
@@ -43,5 +46,6 @@ impl RiskConfig {
         + 8   // insurance_fund_target
         + 8   // circuit_breaker_threshold
         + 8   // shock_magnitude_bps
-        + 1;  // bump
+        + 1   // require_admin_approval
+        + 1; // bump
 }

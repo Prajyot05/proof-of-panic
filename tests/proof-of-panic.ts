@@ -38,28 +38,29 @@ describe("proof-of-panic", () => {
   before(async () => {
     [globalStatePda] = anchor.web3.PublicKey.findProgramAddressSync(
       [Buffer.from("global_state")],
-      program.programId
+      program.programId,
     );
     [riskConfigPda] = anchor.web3.PublicKey.findProgramAddressSync(
       [Buffer.from("risk_config")],
-      program.programId
+      program.programId,
     );
     [positionBookPda] = anchor.web3.PublicKey.findProgramAddressSync(
       [Buffer.from("position_book")],
-      program.programId
+      program.programId,
     );
     [incentivesConfigPda] = anchor.web3.PublicKey.findProgramAddressSync(
       [Buffer.from("incentives_config")],
-      program.programId
+      program.programId,
     );
     [rewardVaultPda] = anchor.web3.PublicKey.findProgramAddressSync(
       [Buffer.from("reward_vault")],
-      program.programId
+      program.programId,
     );
   });
 
   it("Initializes the protocol", async () => {
-    const globalStateInfo = await provider.connection.getAccountInfo(globalStatePda);
+    const globalStateInfo =
+      await provider.connection.getAccountInfo(globalStatePda);
     if (globalStateInfo) {
       console.log("Protocol already initialized");
       return;
@@ -81,14 +82,11 @@ describe("proof-of-panic", () => {
   });
 
   it("Initializes incentives", async () => {
-    const incentivesInfo = await provider.connection.getAccountInfo(incentivesConfigPda);
+    const incentivesInfo =
+      await provider.connection.getAccountInfo(incentivesConfigPda);
     if (incentivesInfo) return;
     await program.methods
-      .initializeIncentives(
-        new BN(50_000_000),
-        new BN(10),
-        true
-      )
+      .initializeIncentives(new BN(50_000_000), new BN(10), true)
       .accounts({
         authority: wallet.publicKey,
         incentivesConfig: incentivesConfigPda,
@@ -124,11 +122,13 @@ describe("proof-of-panic", () => {
   });
 
   it("Submits proof and activates circuit breaker", async () => {
-    const positionBook = await program.account.positionBook.fetch(positionBookPda);
+    const positionBook =
+      await program.account.positionBook.fetch(positionBookPda);
     // Since Anchor deserializes the struct, we can't get the raw bytes directly without fetching the account info
-    const accountInfo = await provider.connection.getAccountInfo(positionBookPda);
+    const accountInfo =
+      await provider.connection.getAccountInfo(positionBookPda);
     // Remove the 8 byte discriminator
-    const dataBytes = accountInfo!.data.slice(8); 
+    const dataBytes = accountInfo!.data.slice(8);
     // The state hash is SHA256 of the positions slice
     // PositionBook has `positions: [Position; 8]` which is 64 * 8 = 512 bytes.
     // The discriminator is 8 bytes, count+padding is 8 bytes. Total offset = 16.
@@ -142,7 +142,11 @@ describe("proof-of-panic", () => {
       stateHash: Array.from(hash),
       schemaVersion: 1,
       preShockPrice: state.oraclePrice,
-      postShockPrice: new BN(state.oraclePrice.toNumber() * (10000 - config.shockMagnitudeBps.toNumber()) / 10000),
+      postShockPrice: new BN(
+        (state.oraclePrice.toNumber() *
+          (10000 - config.shockMagnitudeBps.toNumber())) /
+          10000,
+      ),
       shockBps: config.shockMagnitudeBps,
       shockDirectionUp: 0,
       maintenanceMarginBps: config.maintenanceMarginBps,
@@ -161,8 +165,8 @@ describe("proof-of-panic", () => {
 
     const proofBytes = Buffer.from("mock_proof_data");
 
-    // Using test-mock-verify feature, SP1_VERIFIER isn't strictly checked via CPI, 
-    // but the pubkey is still needed in the accounts list. 
+    // Using test-mock-verify feature, SP1_VERIFIER isn't strictly checked via CPI,
+    // but the pubkey is still needed in the accounts list.
     // Wait, the account is CHECK: SP1 Verifier Program (Strictly Enforced) with address = SUNSPOT_VERIFIER_PROGRAM_ID.
     // We need to pass the same pubkey. We can use program.programId for the test or create one if it doesn't matter since we'll mock verify.
     // Let's pass the default SUNSPOT_VERIFIER_PROGRAM_ID which is 11111111111111111111111111111111 (system program) or [0;32].
@@ -171,17 +175,14 @@ describe("proof-of-panic", () => {
     const sp1Verifier = new anchor.web3.PublicKey(new Uint8Array(32));
 
     await program.methods
-      .submitProofAndVerify(
-        proofBytes,
-        publicValuesBytes,
-        false
-      )
+      .submitProofAndVerify(proofBytes, publicValuesBytes, false)
       .accounts({
         submitter: wallet.publicKey,
         globalState: globalStatePda,
         riskConfig: riskConfigPda,
         positionBook: positionBookPda,
         sp1Verifier: sp1Verifier,
+        admin: wallet.publicKey,
         pythOracle: null,
         systemProgram: anchor.web3.SystemProgram.programId,
       })
@@ -192,10 +193,11 @@ describe("proof-of-panic", () => {
   });
 
   it("Rejects stale proofs and re-triggering", async () => {
-    const accountInfo = await provider.connection.getAccountInfo(positionBookPda);
+    const accountInfo =
+      await provider.connection.getAccountInfo(positionBookPda);
     const positionsBytes = accountInfo!.data.slice(16, 16 + 512);
     const hash = createHash("sha256").update(positionsBytes).digest();
-    
+
     const state = await program.account.globalState.fetch(globalStatePda);
     const config = await program.account.riskConfig.fetch(riskConfigPda);
 
@@ -203,7 +205,11 @@ describe("proof-of-panic", () => {
       stateHash: Array.from(hash),
       schemaVersion: 1,
       preShockPrice: state.oraclePrice,
-      postShockPrice: new BN(state.oraclePrice.toNumber() * (10000 - config.shockMagnitudeBps.toNumber()) / 10000),
+      postShockPrice: new BN(
+        (state.oraclePrice.toNumber() *
+          (10000 - config.shockMagnitudeBps.toNumber())) /
+          10000,
+      ),
       shockBps: config.shockMagnitudeBps,
       shockDirectionUp: 0,
       maintenanceMarginBps: config.maintenanceMarginBps,
@@ -225,17 +231,14 @@ describe("proof-of-panic", () => {
 
     try {
       await program.methods
-        .submitProofAndVerify(
-          proofBytes,
-          publicValuesBytes,
-          false
-        )
+        .submitProofAndVerify(proofBytes, publicValuesBytes, false)
         .accounts({
           submitter: wallet.publicKey,
           globalState: globalStatePda,
           riskConfig: riskConfigPda,
           positionBook: positionBookPda,
           sp1Verifier: sp1Verifier,
+          admin: wallet.publicKey,
           pythOracle: null,
           systemProgram: anchor.web3.SystemProgram.programId,
         })

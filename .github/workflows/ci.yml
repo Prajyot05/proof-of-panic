@@ -69,6 +69,17 @@ jobs:
       - name: Build Next.js App
         working-directory: ./app
         run: npm run build
+      
+      - name: Copy committed proofs into frontend public folder (if present)
+        run: |
+          node ./scripts/copy-proofs.js || true
+      
+      - name: Build SDK
+        working-directory: ./packages/sdk
+        run: |
+          npm ci
+          npm run build
+
 
   deploy-devnet:
     name: Deploy to Devnet
@@ -95,3 +106,29 @@ jobs:
           solana config set --url devnet --keypair deploy-keypair.json
           anchor deploy --provider.cluster devnet --provider.wallet deploy-keypair.json
           rm deploy-keypair.json
+
+  e2e-verify:
+    name: E2E: Verify Committed Proofs (conditional)
+    runs-on: ubuntu-latest
+    needs: [anchor-build, frontend]
+    if: secrets.SP1_VERIFIER_PROGRAM_ID && secrets.DEPLOY_KEYPAIR_JSON
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Run verification script
+        env:
+          SP1_VERIFIER_PROGRAM_ID: ${{ secrets.SP1_VERIFIER_PROGRAM_ID }}
+          HOME: ${{ runner.temp }}
+          RPC_URL: https://api.devnet.solana.com
+        run: |
+          # Write a temporary keypair (must be funded on devnet by the repo owner)
+          echo '${{ secrets.DEPLOY_KEYPAIR_JSON }}' > $HOME/deploy-keypair.json
+          node ./scripts/6-verify.ts || (echo "E2E verify failed" && exit 1)

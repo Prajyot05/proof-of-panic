@@ -46,4 +46,10 @@ pub enum PanicError {
 
     #[msg("Reward vault has insufficient balance")]
     RewardVaultInsufficient,
+
+    #[msg("Missing governance/admin signature for CPI action")]
+    MissingGovernanceSignature,
+
+    #[msg("Provided governance/admin is not authorized")]
+    InvalidGovernance,
 }
