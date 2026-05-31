@@ -100,12 +100,12 @@ fn main() -> Result<()> {
             Ok(res) => {
                 if let Ok(json) = res.json::<serde_json::Value>() {
                     if let Some(parsed) = json["parsed"].as_array() {
-                        if let Some(price_data) = parsed.get(0) {
+                        if let Some(price_data) = parsed.first() {
                             if let Some(price_info) = price_data["price"].as_object() {
                                 let price_str = price_info["price"].as_str().unwrap_or("0");
                                 let expo = price_info["expo"].as_i64().unwrap_or(0);
                                 if let Ok(mut price) = price_str.parse::<u64>() {
-                                    let expo_abs = expo.abs() as u32;
+                                    let expo_abs = expo.unsigned_abs() as u32;
                                     if expo_abs > 6 {
                                         price /= 10_u64.pow(expo_abs - 6);
                                     } else {

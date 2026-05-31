@@ -31,8 +31,8 @@ pub fn evaluate_positions(
         positions.len()
     ];
 
-    for i in 0..positions.len() {
-        results[i].index = i;
+    for (i, result) in results.iter_mut().enumerate() {
+        result.index = i;
     }
 
     let mut cascade_active = true;
@@ -168,15 +168,13 @@ fn compute_pnl(position: &SimPosition, current_price: u64) -> i64 {
             let pnl = (position.size as u128 * loss as u128 / position.entry_price as u128) as u64;
             -(pnl as i64)
         }
+    } else if current_price <= position.entry_price {
+        let gain = position.entry_price - current_price;
+        let pnl = (position.size as u128 * gain as u128 / position.entry_price as u128) as u64;
+        pnl as i64
     } else {
-        if current_price <= position.entry_price {
-            let gain = position.entry_price - current_price;
-            let pnl = (position.size as u128 * gain as u128 / position.entry_price as u128) as u64;
-            pnl as i64
-        } else {
-            let loss = current_price - position.entry_price;
-            let pnl = (position.size as u128 * loss as u128 / position.entry_price as u128) as u64;
-            -(pnl as i64)
-        }
+        let loss = current_price - position.entry_price;
+        let pnl = (position.size as u128 * loss as u128 / position.entry_price as u128) as u64;
+        -(pnl as i64)
     }
 }

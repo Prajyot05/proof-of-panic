@@ -30,6 +30,17 @@ pub enum SimulatorError {
     InvalidScenario,
 }
 
+impl std::fmt::Display for SimulatorError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            SimulatorError::MathOverflow => write!(f, "Math overflow"),
+            SimulatorError::InvalidScenario => write!(f, "Invalid scenario"),
+        }
+    }
+}
+
+impl std::error::Error for SimulatorError {}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SimPosition {
     /// Owner pubkey as hex string
