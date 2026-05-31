@@ -82,12 +82,15 @@ export async function POST(req: Request) {
     // 1) app/public/scenarios/<scenarioId>/proof.bin
     // 2) outputs/sp1/proof.bin (local artifact)
     // If none available we fall back to a mock proof (for UI-only serialized txs).
-    const scenarioProofPath = `./app/public/scenarios/${scenarioId}/proof.bin`;
-    const outputsProofPath = `./outputs/sp1/proof.bin`;
+    const path = await import("path");
+    
+    // In Next.js, process.cwd() points to the root of the app directory during dev/build
+    const scenarioProofPath = path.join(process.cwd(), "public", "scenarios", scenarioId, "proof.bin");
+    const outputsProofPath = path.join(process.cwd(), "..", "outputs", "sp1", "proof.bin"); // For local dev fallback
+
     let proofBytes: Buffer;
     try {
       // Try scenario-local proof first
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const fs = await import("fs");
       if (fs.existsSync(scenarioProofPath)) {
         proofBytes = fs.readFileSync(scenarioProofPath);

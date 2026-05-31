@@ -1,47 +1,65 @@
-# Deployment & Key Management
+# Deployment & Operations Guide
 
-This document describes recommended deployment and key-management practices for Proof of Panic components (Judge Mode, Keeper, and CI).
+This document covers the operational requirements for running the **Proof of Panic** protocol and its associated Keeper bots in a production or live-devnet environment.
 
-1. Keeper Key Management
+## 1. Key Management & Private Keys
 
-- Use a dedicated keeper signing key for proof submission. Do NOT store raw keypairs in repo.
-- Preferred: use a cloud KMS (AWS KMS, GCP KMS, Azure Key Vault) to store and sign transactions.
-- Alternative for small pilots: store the keypair JSON as an encrypted secret in GitHub Actions (`DEPLOY_KEYPAIR_JSON`) and load it in CI when deploying to devnet. Keep balances minimal.
-- For local testing: set `JUDGE_MODE_PRIVATE_KEY` to a JSON array string in `.env` (only for local demo).
+The architecture consists of two primary components requiring private keys:
 
-2. Judge Mode (Hosted)
+### A. The Keeper Bot (`keeper/`)
+The Keeper is a background service that polls Pyth prices, evaluates market conditions off-chain using the `simulator`, generates SP1 proofs, and submits them on-chain.
 
-- Judge Mode may optionally submit a real transaction to devnet. Configure `JUDGE_MODE_PRIVATE_KEY` environment variable in your hosting environment (Vercel Environment Variables) if you want the hosted site to sign and submit transactions.
-- Recommended: leave Judge Mode unsigned in public hosts and provide a serialized transaction for users to inspect. Only enable automatic signed submissions for private demos.
+**Security:**
+- The Keeper needs a funded Solana wallet to pay for gas fees.
+- **NEVER** commit the Keeper's private key.
+- **Best Practice:** Pass the key as a base64 string or JSON array via the `KEEPER_KEYPAIR` environment variable securely injected at runtime (e.g., Render Secrets, AWS Secrets Manager, GitHub Actions Secrets).
 
-3. CI Deployment Keys
+### B. Judge Mode (Next.js Frontend)
+The frontend API route `/api/verify` supports a "Judge Mode" which attempts to submit transactions directly on-chain using precomputed proofs to demonstrate functionality to hackathon judges without needing to spin up the Keeper.
 
-- For automated devnet deployment, store the deploy key JSON in `secrets.SOLANA_KEYPAIR_JSON` and restrict access to repository admins.
-- The `e2e-verify` job will also use `secrets.DEPLOY_KEYPAIR_JSON` to run verification scripts. Keep this distinct from production keys.
+**Security:**
+- The frontend route requires `JUDGE_MODE_PRIVATE_KEY` set in Vercel's Environment Variables.
+- This key should belong to a **disposable, low-balance wallet** funded with just enough Devnet SOL to pay for transactions.
+- Do not use a mainnet key or an administrative authority key for this purpose.
 
-4. Keeper Operations & Secrets
+## 2. Governance & Multisig Gating
 
-- Keepers must have private keys for submitting transactions. In production, run keepers on infrastructure with KMS/HSM and do not expose keys to application logs.
-- Use a vault (HashiCorp Vault recommended) or cloud provider secret manager to rotate keys.
+The Anchor contract (`submit_proof.rs`) includes a `require_admin_approval` flag in its Risk Config.
 
-5. Monitoring & Alerts
+When enabled (`true`):
+- The `submit_proof_and_verify` instruction **requires** an additional signer: the protocol's `admin` authority.
+- In a production environment, this `admin` account should be an **SPL Governance DAO** or a **Squads Multisig**.
+- The Keeper bot would submit a proposal containing the SP1 proof. The DAO/Multisig would vote to approve the proposal, and the transaction would be executed by the governance program, satisfying the `admin_info.is_signer` constraint.
 
-- Expose Prometheus `/metrics` from keeper and monitor the following metrics:
-  - `proof_of_panic_sp1_proof_generation_time_seconds`
-  - `proof_of_panic_active_risk_score`
-  - `proof_of_panic_circuit_breaker_active`
-- Configure alerting for repeated proof generation failures and for high-risk events (risk_score > threshold) to a pager/Slack channel.
+## 3. Running the Keeper
 
-6. Governance & CPI Controls (Operational Guidance)
-
-- The `submit_proof_and_verify` instruction performs on-chain actions via CPI. For production, the target protocol MUST gate CPI actions with multisig or governance.
-- Do not allow a single keeper identity to act as the final authority for pausing production trading without protocol governance involvement.
-
-7. Quick local run
+We provide a pre-built Docker setup to run the Keeper, alongside Prometheus and Grafana for monitoring.
 
 ```bash
-# Build prover and simulate a proof locally
-./scripts/5-prove.sh
-# Submit local proof to local validator
-RPC_URL=http://127.0.0.1:8899 node ./scripts/6-verify.ts
+docker-compose up --build -d
 ```
+
+This starts:
+- **Keeper (Port 10000):** Runs the core Node.js polling loop and exposes a `/metrics` endpoint.
+- **Prometheus (Port 9090):** Scrapes the Keeper metrics.
+- **Grafana (Port 3000):** Visualizes the metrics (Default Login: `admin/admin`).
+
+### Keeper Environment Variables
+
+| Variable | Description |
+|----------|-------------|
+| `RPC_URL` | Solana RPC endpoint (e.g., Helius, Triton, QuickNode). |
+| `KEEPER_KEYPAIR` | JSON array format of the Keeper's funded wallet. |
+| `PROGRAM_ID` | The deployed Anchor Program ID. |
+| `SP1_PROVER` | Use `network` to offload to Succinct Cloud or `local` for local execution. |
+| `SP1_PRIVATE_KEY` | Succinct API Key if using `SP1_PROVER=network`. |
+| `PORT` | Port for the Prometheus metrics server (default `10000`). |
+
+## 4. CI/CD Pipeline
+
+The GitHub Actions workflow (`.github/workflows/ci.yml`) is configured to:
+1. Run Rust clippy, formatting checks, and Anchor tests.
+2. Build the Next.js frontend and `@proof-of-panic/sdk`.
+3. Automate deployment to Solana Devnet on pushes to `main` (Requires `SOLANA_KEYPAIR_JSON` secret).
+4. Run an E2E Smoke Test (`scripts/ci-verify.ts`) using the committed, pre-generated SP1 proof artifacts against the live Devnet deployment.
+

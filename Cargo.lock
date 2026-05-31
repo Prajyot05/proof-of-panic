@@ -1911,6 +1911,7 @@ dependencies = [
 name = "panic-simulator"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "clap",
  "hex",
  "proptest",

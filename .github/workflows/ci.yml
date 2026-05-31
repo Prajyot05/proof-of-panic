@@ -79,6 +79,7 @@ jobs:
         run: |
           npm ci
           npm run build
+          npm pack
 
 
   deploy-devnet:
@@ -131,4 +132,4 @@ jobs:
         run: |
           # Write a temporary keypair (must be funded on devnet by the repo owner)
           echo '${{ secrets.DEPLOY_KEYPAIR_JSON }}' > $HOME/deploy-keypair.json
-          node ./scripts/6-verify.ts || (echo "E2E verify failed" && exit 1)
+          npx tsx ./scripts/ci-verify.ts || (echo "E2E verify failed" && exit 1)

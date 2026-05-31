@@ -36,3 +36,11 @@ app/public/scenarios/*/Verifier.toml
 *.log
 scripts/demo-snapshot.json
 
+# Secrets & Keys
+*-keypair.json
+*-keypair.md
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local

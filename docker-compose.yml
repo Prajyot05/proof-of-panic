@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  keeper:
+    build:
+      context: .
+      dockerfile: keeper/Dockerfile
+    environment:
+      - RPC_URL=https://api.devnet.solana.com
+      - KEEPER_KEYPAIR=[]
+      - PROGRAM_ID=11111111111111111111111111111111
+      - SP1_PROVER=network
+      - SP1_PRIVATE_KEY=your_succinct_api_key
+      - PORT=10000
+    ports:
+      - "10000:10000"
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    depends_on:
+      - keeper
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - prometheus

@@ -13,6 +13,7 @@ use std::path::PathBuf;
 
 use clap::Parser;
 
+use anyhow::{Context, Result};
 use panic_simulator::commitment::compute_state_hash;
 use panic_simulator::liquidation::evaluate_positions;
 use panic_simulator::scenarios::{get_scenario, list_scenarios, scenario_to_snapshot};
@@ -53,7 +54,7 @@ struct Args {
     use_live_pyth: bool,
 }
 
-fn main() {
+fn main() -> Result<()> {
     let args = Args::parse();
 
     // Handle --list-scenarios
@@ -64,7 +65,7 @@ fn main() {
                 println!("  {:<22} {}", name, s.description);
             }
         }
-        return;
+        return Ok(());
     }
 
     // Load snapshot from file or scenario
@@ -83,9 +84,9 @@ fn main() {
         (scenario_to_snapshot(&scenario), is_up)
     } else if let Some(snapshot_path) = &args.snapshot {
         let snapshot_str =
-            std::fs::read_to_string(snapshot_path).expect("Failed to read snapshot file");
+            std::fs::read_to_string(snapshot_path).context("Failed to read snapshot file")?;
         let snapshot: Snapshot =
-            serde_json::from_str(&snapshot_str).expect("Failed to parse snapshot JSON");
+            serde_json::from_str(&snapshot_str).context("Failed to parse snapshot JSON")?;
         (snapshot, args.shock_up)
     } else {
         eprintln!("Either --snapshot <path> or --scenario <name> is required.");
@@ -142,9 +143,9 @@ fn main() {
     // ── Apply shock ──
     let pre_shock_price = snapshot.oracle_price;
     let post_shock_price = if shock_direction_up {
-        apply_shock_up(pre_shock_price, shock_bps).expect("Math overflow")
+        apply_shock_up(pre_shock_price, shock_bps).context("Math overflow")?
     } else {
-        apply_shock(pre_shock_price, shock_bps).expect("Math overflow")
+        apply_shock(pre_shock_price, shock_bps).context("Math overflow")?
     };
 
     let direction = if shock_direction_up { "+" } else { "-" };
@@ -166,7 +167,7 @@ fn main() {
         &mut positions,
         post_shock_price,
         &snapshot.risk_config,
-    ).expect("Evaluation failed due to math overflow");
+    ).context("Evaluation failed due to math overflow")?;
 
     println!("Position Results:");
     for (i, (pos, res)) in snapshot
@@ -263,17 +264,17 @@ fn main() {
     };
 
     // ── Write outputs ──
-    std::fs::create_dir_all(&output_dir).expect("Failed to create output directory");
+    std::fs::create_dir_all(&output_dir).context("Failed to create output directory")?;
 
     // Write results JSON (for frontend consumption)
-    let results_json = serde_json::to_string_pretty(&result).expect("Failed to serialize results");
+    let results_json = serde_json::to_string_pretty(&result).context("Failed to serialize results")?;
     std::fs::write(output_dir.join("results.json"), results_json)
-        .expect("Failed to write results.json");
+        .context("Failed to write results.json")?;
 
     // Also write the snapshot for the dashboard to consume
-    let snapshot_json = serde_json::to_string_pretty(&snapshot).expect("Failed to serialize snapshot");
+    let snapshot_json = serde_json::to_string_pretty(&snapshot).context("Failed to serialize snapshot")?;
     std::fs::write(output_dir.join("snapshot.json"), snapshot_json)
-        .expect("Failed to write snapshot.json");
+        .context("Failed to write snapshot.json")?;
 
     println!();
     println!("✓ Outputs generated in {:?}", output_dir);
@@ -285,4 +286,6 @@ fn main() {
         "✓ Snapshot written to {}/snapshot.json",
         output_dir.display()
     );
+
+    Ok(())
 }
