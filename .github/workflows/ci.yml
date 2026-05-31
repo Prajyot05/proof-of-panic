@@ -68,7 +68,14 @@ jobs:
         run: |
           # PATH was already persisted via GITHUB_PATH in Setup Solana
           command -v solana
-          rm -f Cargo.lock
+          # Solana/Anchor toolchains in CI can fail on lockfile v4.
+          # Normalize all Cargo.lock files to v3 for compatibility.
+          find . -name Cargo.lock -type f -print0 | while IFS= read -r -d '' lock; do
+            if grep -q '^version = 4$' "$lock"; then
+              echo "Normalizing lockfile: $lock"
+              sed -i 's/^version = 4$/version = 3/' "$lock"
+            fi
+          done
           anchor build
 
   frontend:
@@ -140,8 +147,15 @@ jobs:
 
       - name: Deploy Program
         run: |
-          export PATH="$HOME/.local/share/solana/install/active_release/bin:$PATH"
-          rm -f Cargo.lock
+          # PATH was already persisted via GITHUB_PATH in Setup Solana
+          command -v solana
+          # Keep deployment build path consistent with anchor-build job.
+          find . -name Cargo.lock -type f -print0 | while IFS= read -r -d '' lock; do
+            if grep -q '^version = 4$' "$lock"; then
+              echo "Normalizing lockfile: $lock"
+              sed -i 's/^version = 4$/version = 3/' "$lock"
+            fi
+          done
           anchor build
           solana config set --url devnet --keypair deploy-keypair.json
           anchor deploy --provider.cluster devnet --provider.wallet deploy-keypair.json
