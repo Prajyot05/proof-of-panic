@@ -3,7 +3,7 @@
 //! Applies a deterministic percentage drop to the oracle price.
 //! No stochastic modeling, no Monte Carlo — just a single multiplication.
 
-use crate::types::{BPS_DENOMINATOR, SimulatorError};
+use crate::types::{SimulatorError, BPS_DENOMINATOR};
 
 /// Apply a basis-points shock to a price.
 ///

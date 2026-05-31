@@ -80,5 +80,5 @@ impl GlobalState {
         + 8   // governance_timelock_slots
         + 8   // max_leverage
         + 8   // circuit_breaker_activation_slot
-        + 1;  // bump
+        + 1; // bump
 }

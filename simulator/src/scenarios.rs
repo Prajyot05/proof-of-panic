@@ -176,7 +176,8 @@ pub fn get_scenario(name: &str) -> Option<Scenario> {
     match name {
         "volatility-shock" => Some(Scenario {
             name: "Volatility Shock",
-            description: "SOL drops 30%. Cascading liquidations deplete insurance. Circuit breaker fires.",
+            description:
+                "SOL drops 30%. Cascading liquidations deplete insurance. Circuit breaker fires.",
             oracle_price: 150 * SCALE,
             insurance_fund: 50_000 * SCALE,
             shock_bps: 3000,

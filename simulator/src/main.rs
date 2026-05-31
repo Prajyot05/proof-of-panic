@@ -70,15 +70,14 @@ fn main() -> Result<()> {
 
     // Load snapshot from file or scenario
     let (mut snapshot, shock_direction_up) = if let Some(scenario_name) = &args.scenario {
-        let scenario = get_scenario(scenario_name)
-            .unwrap_or_else(|| {
-                eprintln!("Unknown scenario: {}", scenario_name);
-                eprintln!("Available scenarios:");
-                for name in list_scenarios() {
-                    eprintln!("  {}", name);
-                }
-                std::process::exit(1);
-            });
+        let scenario = get_scenario(scenario_name).unwrap_or_else(|| {
+            eprintln!("Unknown scenario: {}", scenario_name);
+            eprintln!("Available scenarios:");
+            for name in list_scenarios() {
+                eprintln!("  {}", name);
+            }
+            std::process::exit(1);
+        });
         println!("Scenario: {} — {}", scenario.name, scenario.description);
         let is_up = scenario_name == "short-squeeze" || args.shock_up;
         (scenario_to_snapshot(&scenario), is_up)
@@ -112,14 +111,18 @@ fn main() -> Result<()> {
                                     } else {
                                         price *= 10_u64.pow(6 - expo_abs);
                                     }
-                                    println!("Live Pyth SOL Price: ${}.{:02}", price / SCALE, (price % SCALE) / (SCALE / 100));
+                                    println!(
+                                        "Live Pyth SOL Price: ${}.{:02}",
+                                        price / SCALE,
+                                        (price % SCALE) / (SCALE / 100)
+                                    );
                                     snapshot.oracle_price = price;
                                 }
                             }
                         }
                     }
                 }
-            },
+            }
             Err(e) => {
                 eprintln!("Warning: Failed to fetch live Pyth price. Error: {}", e);
             }
@@ -163,11 +166,9 @@ fn main() -> Result<()> {
 
     // ── Evaluate positions ──
     let mut positions = snapshot.positions.clone();
-    let (position_results, final_post_shock_price) = evaluate_positions(
-        &mut positions,
-        post_shock_price,
-        &snapshot.risk_config,
-    ).context("Evaluation failed due to math overflow")?;
+    let (position_results, final_post_shock_price) =
+        evaluate_positions(&mut positions, post_shock_price, &snapshot.risk_config)
+            .context("Evaluation failed due to math overflow")?;
 
     println!("Position Results:");
     for (i, (pos, res)) in snapshot
@@ -209,7 +210,11 @@ fn main() -> Result<()> {
     let total_losses: u64 = position_results.iter().map(|r| r.liquidation_loss).sum();
 
     let (insurance_remaining, bad_debt, risk_score, protocol_solvent, total_fees) =
-        compute_solvency(&position_results, snapshot.insurance_fund, &snapshot.positions);
+        compute_solvency(
+            &position_results,
+            snapshot.insurance_fund,
+            &snapshot.positions,
+        );
 
     println!();
     println!(
@@ -217,13 +222,21 @@ fn main() -> Result<()> {
         num_liquidated,
         snapshot.positions.len()
     );
-    println!("Total Losses: ${}.{:02}", total_losses / SCALE, (total_losses % SCALE) / (SCALE / 100));
+    println!(
+        "Total Losses: ${}.{:02}",
+        total_losses / SCALE,
+        (total_losses % SCALE) / (SCALE / 100)
+    );
     println!(
         "Insurance Remaining: ${}.{:02}",
         insurance_remaining / SCALE,
         (insurance_remaining % SCALE) / (SCALE / 100),
     );
-    println!("Bad Debt: ${}.{:02}", bad_debt / SCALE, (bad_debt % SCALE) / (SCALE / 100));
+    println!(
+        "Bad Debt: ${}.{:02}",
+        bad_debt / SCALE,
+        (bad_debt % SCALE) / (SCALE / 100)
+    );
     println!(
         "Risk Score: {}.{}%{}",
         risk_score * 100 / RISK_SCORE_MAX,
@@ -267,21 +280,20 @@ fn main() -> Result<()> {
     std::fs::create_dir_all(&output_dir).context("Failed to create output directory")?;
 
     // Write results JSON (for frontend consumption)
-    let results_json = serde_json::to_string_pretty(&result).context("Failed to serialize results")?;
+    let results_json =
+        serde_json::to_string_pretty(&result).context("Failed to serialize results")?;
     std::fs::write(output_dir.join("results.json"), results_json)
         .context("Failed to write results.json")?;
 
     // Also write the snapshot for the dashboard to consume
-    let snapshot_json = serde_json::to_string_pretty(&snapshot).context("Failed to serialize snapshot")?;
+    let snapshot_json =
+        serde_json::to_string_pretty(&snapshot).context("Failed to serialize snapshot")?;
     std::fs::write(output_dir.join("snapshot.json"), snapshot_json)
         .context("Failed to write snapshot.json")?;
 
     println!();
     println!("✓ Outputs generated in {:?}", output_dir);
-    println!(
-        "✓ Results written to {}/results.json",
-        output_dir.display()
-    );
+    println!("✓ Results written to {}/results.json", output_dir.display());
     println!(
         "✓ Snapshot written to {}/snapshot.json",
         output_dir.display()

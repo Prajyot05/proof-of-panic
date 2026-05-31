@@ -41,9 +41,9 @@ pub fn handler(ctx: Context<InitializePositions>) -> Result<()> {
     // Position 0: LONG 10x, $10,000 collateral, entry $150.00 — HEALTHY
     position_book.positions[0] = Position {
         owner: demo_owners[0],
-        collateral: 10_000 * SCALE,      // $10,000
-        size: 100_000 * SCALE,            // $100,000 notional (10x leverage)
-        entry_price: 150 * SCALE,         // $150.00
+        collateral: 10_000 * SCALE, // $10,000
+        size: 100_000 * SCALE,      // $100,000 notional (10x leverage)
+        entry_price: 150 * SCALE,   // $150.00
         is_long: 1,
         is_open: 1,
         _padding: [0u8; 6],
@@ -52,9 +52,9 @@ pub fn handler(ctx: Context<InitializePositions>) -> Result<()> {
     // Position 1: LONG 15x, $5,000 collateral, entry $155.00 — MARGINAL
     position_book.positions[1] = Position {
         owner: demo_owners[1],
-        collateral: 5_000 * SCALE,        // $5,000
-        size: 75_000 * SCALE,             // $75,000 notional (15x leverage)
-        entry_price: 155 * SCALE,         // $155.00
+        collateral: 5_000 * SCALE, // $5,000
+        size: 75_000 * SCALE,      // $75,000 notional (15x leverage)
+        entry_price: 155 * SCALE,  // $155.00
         is_long: 1,
         is_open: 1,
         _padding: [0u8; 6],
@@ -63,9 +63,9 @@ pub fn handler(ctx: Context<InitializePositions>) -> Result<()> {
     // Position 2: LONG 20x, $3,000 collateral, entry $160.00 — DANGEROUS
     position_book.positions[2] = Position {
         owner: demo_owners[2],
-        collateral: 3_000 * SCALE,        // $3,000
-        size: 60_000 * SCALE,             // $60,000 notional (20x leverage)
-        entry_price: 160 * SCALE,         // $160.00
+        collateral: 3_000 * SCALE, // $3,000
+        size: 60_000 * SCALE,      // $60,000 notional (20x leverage)
+        entry_price: 160 * SCALE,  // $160.00
         is_long: 1,
         is_open: 1,
         _padding: [0u8; 6],
@@ -74,10 +74,10 @@ pub fn handler(ctx: Context<InitializePositions>) -> Result<()> {
     // Position 3: SHORT 5x, $8,000 collateral, entry $145.00 — SAFE (benefits from drop)
     position_book.positions[3] = Position {
         owner: demo_owners[3],
-        collateral: 8_000 * SCALE,        // $8,000
-        size: 40_000 * SCALE,             // $40,000 notional (5x leverage)
-        entry_price: 145 * SCALE,         // $145.00
-        is_long: 0,                       // SHORT
+        collateral: 8_000 * SCALE, // $8,000
+        size: 40_000 * SCALE,      // $40,000 notional (5x leverage)
+        entry_price: 145 * SCALE,  // $145.00
+        is_long: 0,                // SHORT
         is_open: 1,
         _padding: [0u8; 6],
     };
@@ -85,9 +85,9 @@ pub fn handler(ctx: Context<InitializePositions>) -> Result<()> {
     // Position 4: LONG 25x, $2,000 collateral, entry $158.00 — EXTREME RISK
     position_book.positions[4] = Position {
         owner: demo_owners[4],
-        collateral: 2_000 * SCALE,        // $2,000
-        size: 50_000 * SCALE,             // $50,000 notional (25x leverage)
-        entry_price: 158 * SCALE,         // $158.00
+        collateral: 2_000 * SCALE, // $2,000
+        size: 50_000 * SCALE,      // $50,000 notional (25x leverage)
+        entry_price: 158 * SCALE,  // $158.00
         is_long: 1,
         is_open: 1,
         _padding: [0u8; 6],

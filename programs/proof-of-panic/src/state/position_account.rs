@@ -39,5 +39,5 @@ impl PositionAccount {
         + 8   // entry_price
         + 1   // is_long
         + 1   // is_open
-        + 1;  // bump
+        + 1; // bump
 }

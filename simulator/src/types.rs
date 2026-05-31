@@ -30,7 +30,6 @@ pub enum SimulatorError {
     InvalidScenario,
 }
 
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SimPosition {
     /// Owner pubkey as hex string

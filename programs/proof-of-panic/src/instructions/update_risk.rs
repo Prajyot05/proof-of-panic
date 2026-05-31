@@ -30,29 +30,35 @@ pub fn handler(
         || new_circuit_breaker_threshold.is_some()
     {
         require!(
-            clock.slot >= global_state.last_risk_update_slot + global_state.governance_timelock_slots,
+            clock.slot
+                >= global_state.last_risk_update_slot + global_state.governance_timelock_slots,
             PanicError::TimelockNotExpired
         );
         global_state.last_risk_update_slot = clock.slot;
     }
 
     if let Some(leverage) = new_max_leverage {
-        require!(leverage > 0 && leverage <= 100 * SCALE, PanicError::InvalidRiskParam);
+        require!(
+            leverage > 0 && leverage <= 100 * SCALE,
+            PanicError::InvalidRiskParam
+        );
         global_state.max_leverage = leverage;
         risk_config.max_leverage = leverage;
         msg!("Max leverage updated to {}x", leverage / SCALE);
     }
 
     if let Some(margin) = new_maintenance_margin_bps {
-        require!(margin > 0 && margin <= BPS_DENOMINATOR, PanicError::InvalidRiskParam);
+        require!(
+            margin > 0 && margin <= BPS_DENOMINATOR,
+            PanicError::InvalidRiskParam
+        );
         risk_config.maintenance_margin_bps = margin;
         msg!("Maintenance margin updated to {} bps", margin);
     }
 
     if let Some(target_margin) = new_liquidation_target_margin_bps {
         require!(
-            target_margin >= risk_config.maintenance_margin_bps
-                && target_margin <= BPS_DENOMINATOR,
+            target_margin >= risk_config.maintenance_margin_bps && target_margin <= BPS_DENOMINATOR,
             PanicError::InvalidRiskParam
         );
         risk_config.liquidation_target_margin_bps = target_margin;

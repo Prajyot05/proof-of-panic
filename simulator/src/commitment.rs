@@ -93,6 +93,9 @@ mod tests {
     #[test]
     fn test_empty_positions() {
         let hash = compute_state_hash(&[]);
-        assert_ne!(hash, [0u8; 32], "Empty position book still produces a non-zero hash");
+        assert_ne!(
+            hash, [0u8; 32],
+            "Empty position book still produces a non-zero hash"
+        );
     }
 }

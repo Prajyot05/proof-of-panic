@@ -31,5 +31,5 @@ impl IncentivesConfig {
         + 8   // min_proof_interval_slots
         + 1   // enabled
         + 1   // reward_vault_bump
-        + 1;  // bump
+        + 1; // bump
 }

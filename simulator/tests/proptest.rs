@@ -49,12 +49,12 @@ proptest! {
     ) {
         // Run the evaluation
         let result = evaluate_positions(&mut positions, current_price, &risk_config);
-        
+
         // Assert invariants
         if let Ok((results, final_price)) = result {
             // 1. Price never increases due to liquidations in our model
             prop_assert!(final_price <= current_price);
-            
+
             // 2. Liquidated size is never negative and never exceeds position size
             for i in 0..positions.len() {
                 prop_assert!(results[i].liquidated_size <= positions[i].size || positions[i].size == 0); // Position size after liquidation could be 0, wait, it's original size

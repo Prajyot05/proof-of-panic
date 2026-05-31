@@ -109,7 +109,8 @@ pub fn evaluate_positions(
                 };
 
                 if effective_collateral < 0 {
-                    results[i].liquidation_loss += effective_collateral.unsigned_abs() + fee_shortfall;
+                    results[i].liquidation_loss +=
+                        effective_collateral.unsigned_abs() + fee_shortfall;
                 } else if fee_shortfall > 0 {
                     results[i].liquidation_loss += fee_shortfall;
                 }
@@ -136,14 +137,14 @@ pub fn evaluate_positions(
             // How many 100k blocks were liquidated?
             let blocks = total_liquidated_size_this_round / (100_000 * SCALE);
             let impact_bps = blocks * price_impact_bps_per_100k;
-            
-            // Assume market trends down on mass liquidations (short squeeze logic could reverse this, 
+
+            // Assume market trends down on mass liquidations (short squeeze logic could reverse this,
             // but we'll assume a standard long-squeeze for simplicity).
             let price_drop = current_price
                 .checked_mul(impact_bps)
                 .ok_or(SimulatorError::MathOverflow)?
                 / BPS_DENOMINATOR;
-            
+
             current_price = current_price.saturating_sub(price_drop);
         }
     }

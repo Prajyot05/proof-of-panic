@@ -11,10 +11,7 @@ pub fn compute_solvency(
     positions: &[SimPosition],
 ) -> (u64, u64, u64, bool, u64) {
     // Sum all liquidation losses (from underwater positions)
-    let total_losses: u64 = position_results
-        .iter()
-        .map(|r| r.liquidation_loss)
-        .sum();
+    let total_losses: u64 = position_results.iter().map(|r| r.liquidation_loss).sum();
 
     let total_fees: u64 = position_results
         .iter()
@@ -65,7 +62,13 @@ pub fn compute_solvency(
         std::cmp::min(RISK_SCORE_MAX, depletion_ratio as u64)
     };
 
-    (insurance_remaining, bad_debt, risk_score, protocol_solvent, total_fees)
+    (
+        insurance_remaining,
+        bad_debt,
+        risk_score,
+        protocol_solvent,
+        total_fees,
+    )
 }
 
 #[cfg(test)]

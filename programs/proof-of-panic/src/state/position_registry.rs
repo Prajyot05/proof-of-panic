@@ -27,5 +27,5 @@ impl PositionRegistry {
         + 32  // position_root
         + 8   // position_count
         + 8   // last_root_slot
-        + 1;  // bump
+        + 1; // bump
 }

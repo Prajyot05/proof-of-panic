@@ -24,7 +24,11 @@ pub fn handler(
     position.is_open = u8::from(is_open);
     position.bump = ctx.bumps.position_account;
 
-    msg!("✓ Position updated: owner={} id={}", position.owner, position_id);
+    msg!(
+        "✓ Position updated: owner={} id={}",
+        position.owner,
+        position_id
+    );
     Ok(())
 }
 
