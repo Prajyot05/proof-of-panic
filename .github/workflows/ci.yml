@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 env:
   CARGO_TERM_COLOR: always
@@ -15,21 +15,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
-          
+
       - name: Cache Cargo dependencies
         uses: Swatinem/rust-cache@v2
-        
+
       - name: Check formatting
         run: cargo fmt --all -- --check
-        
+
       - name: Clippy (Simulator)
         run: cargo clippy --manifest-path simulator/Cargo.toml -- -D warnings
-        
+
       - name: Run Tests (Simulator)
         run: cargo test --manifest-path simulator/Cargo.toml
 
@@ -38,25 +38,36 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Solana
         run: |
           sudo apt-get update && sudo apt-get install -y pkg-config build-essential libudev-dev libssl-dev
-          sh -c "$(curl -sSfL https://release.solana.com/v1.18.23/install)"
-          export PATH="$HOME/.local/share/solana/install/active_release/bin:$PATH"
+          curl -fsSL --retry 5 --retry-all-errors https://release.anza.xyz/v1.18.23/install -o solana-install.sh || \
+            curl -fsSL --retry 5 --retry-all-errors https://release.solana.com/v1.18.23/install -o solana-install.sh
+          sh solana-install.sh
+          if [ -d "$HOME/.local/share/solana/install/active_release/bin" ]; then
+            SOLANA_BIN="$HOME/.local/share/solana/install/active_release/bin"
+          elif [ -d "$HOME/.local/share/agave/install/active_release/bin" ]; then
+            SOLANA_BIN="$HOME/.local/share/agave/install/active_release/bin"
+          else
+            echo "Solana/Agave install path not found"
+            exit 1
+          fi
+          export PATH="$SOLANA_BIN:$PATH"
           solana --version
           cargo build-sbf --version
-          echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
+          echo "$SOLANA_BIN" >> $GITHUB_PATH
 
       - name: Setup Anchor
         run: npm install -g @coral-xyz/anchor-cli@0.30.1
-          
+
       - name: Cache dependencies
         uses: Swatinem/rust-cache@v2
-        
+
       - name: Build Program
         run: |
-          export PATH="/home/runner/.local/share/solana/install/active_release/bin:$PATH"
+          # PATH was already persisted via GITHUB_PATH in Setup Solana
+          command -v solana
           anchor build
 
   frontend:
@@ -64,32 +75,31 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: 'package-lock.json'
-          
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: "package-lock.json"
+
       - name: Install dependencies
         run: npm ci
-        
+
       - name: Build Next.js App
         working-directory: ./app
         run: npm run build
-      
+
       - name: Copy committed proofs into frontend public folder (if present)
         run: |
           node ./scripts/copy-proofs.js || true
-      
+
       - name: Build SDK
         working-directory: ./packages/sdk
         run: |
           npm ci
           npm run build
           npm pack
-
 
   deploy-devnet:
     name: Deploy to Devnet
@@ -98,28 +108,39 @@ jobs:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Solana
         run: |
           sudo apt-get update && sudo apt-get install -y pkg-config build-essential libudev-dev libssl-dev
-          sh -c "$(curl -sSfL https://release.solana.com/v1.18.23/install)"
-          export PATH="$HOME/.local/share/solana/install/active_release/bin:$PATH"
+          curl -fsSL --retry 5 --retry-all-errors https://release.anza.xyz/v1.18.23/install -o solana-install.sh || \
+            curl -fsSL --retry 5 --retry-all-errors https://release.solana.com/v1.18.23/install -o solana-install.sh
+          sh solana-install.sh
+          if [ -d "$HOME/.local/share/solana/install/active_release/bin" ]; then
+            SOLANA_BIN="$HOME/.local/share/solana/install/active_release/bin"
+          elif [ -d "$HOME/.local/share/agave/install/active_release/bin" ]; then
+            SOLANA_BIN="$HOME/.local/share/agave/install/active_release/bin"
+          else
+            echo "Solana/Agave install path not found"
+            exit 1
+          fi
+          export PATH="$SOLANA_BIN:$PATH"
           solana --version
           cargo build-sbf --version
-          echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
+          echo "$SOLANA_BIN" >> $GITHUB_PATH
 
       - name: Setup Anchor
         run: npm install -g @coral-xyz/anchor-cli@0.30.1
-          
+
       - name: Cache dependencies
         uses: Swatinem/rust-cache@v2
-        
+
       - name: Write keypair
         run: echo "${{ secrets.SOLANA_KEYPAIR_JSON }}" > deploy-keypair.json
-        
+
       - name: Deploy Program
         run: |
-          export PATH="/home/runner/.local/share/solana/install/active_release/bin:$PATH"
+          # PATH was already persisted via GITHUB_PATH in Setup Solana
+          command -v solana
           anchor build
           solana config set --url devnet --keypair deploy-keypair.json
           anchor deploy --provider.cluster devnet --provider.wallet deploy-keypair.json
@@ -135,7 +156,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
 
       - name: Install deps
         run: npm ci

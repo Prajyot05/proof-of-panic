@@ -303,6 +303,10 @@ function ProofPanel({ scenario }: { scenario: ScenarioData }) {
       });
 
       const data = await res.json();
+      
+      // Add a realistic 1.5s delay so the "Verifying on Devnet..." state is visible
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
       if (!res.ok) throw new Error(data.error || "Failed to verify");
 
       setTxSignature(data.txSignature || "simulated-tx-base64");
