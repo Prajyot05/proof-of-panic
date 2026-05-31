@@ -41,8 +41,12 @@ jobs:
       
       - name: Setup Solana
         run: |
+          sudo apt-get update && sudo apt-get install -y pkg-config build-essential libudev-dev libssl-dev
           sh -c "$(curl -sSfL https://release.solana.com/v1.18.23/install)"
-          echo "/home/runner/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
+          export PATH="$HOME/.local/share/solana/install/active_release/bin:$PATH"
+          solana --version
+          cargo build-sbf --version
+          echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
 
       - name: Setup Anchor
         run: npm install -g @coral-xyz/anchor-cli@0.30.1
@@ -97,8 +101,12 @@ jobs:
       
       - name: Setup Solana
         run: |
+          sudo apt-get update && sudo apt-get install -y pkg-config build-essential libudev-dev libssl-dev
           sh -c "$(curl -sSfL https://release.solana.com/v1.18.23/install)"
-          echo "/home/runner/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
+          export PATH="$HOME/.local/share/solana/install/active_release/bin:$PATH"
+          solana --version
+          cargo build-sbf --version
+          echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
 
       - name: Setup Anchor
         run: npm install -g @coral-xyz/anchor-cli@0.30.1
