@@ -4,7 +4,7 @@
 //! for off-chain use with serde serialization.
 //!
 //! CRITICAL: The `canonical_bytes()` serialization MUST produce identical
-//! bytes to the on-chain `PositionBook::canonical_bytes()` and the Noir
+//! bytes to the on-chain `PositionBook::canonical_bytes()` and the SP1 zkVM
 //! circuit's hash input. Any discrepancy will cause state hash mismatch.
 
 use serde::{Deserialize, Serialize};

@@ -162,7 +162,7 @@ proof-of-panic/
 │       ├── solvency.rs          # Insurance fund + bad debt computation
 │       ├── adapters.rs          # Multi-market adapter abstraction
 │       ├── commitment.rs        # SHA-256 state hash
-│       └── witness.rs           # Noir witness file generation
+│       └── types.rs             # Core data structures
 ├── sp1-program/                 # SP1 zkVM Guest
 │   └── src/main.rs              # Proves simulation correctness
 ├── sp1-script/                  # SP1 Host runner

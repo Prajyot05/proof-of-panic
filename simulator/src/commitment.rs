@@ -1,7 +1,7 @@
 //! SHA-256 state commitment computation.
 //!
 //! Computes a deterministic hash of the positions array that can be
-//! verified both in the Noir circuit and on-chain.
+//! verified both in the SP1 zkVM and on-chain.
 
 use sha2::{Digest, Sha256};
 

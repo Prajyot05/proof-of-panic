@@ -2,7 +2,7 @@
 //!
 //! Reads a JSON snapshot of on-chain protocol state (or uses a built-in scenario),
 //! applies a market shock, computes the liquidation cascade, and outputs
-//! Noir witness files and a results JSON.
+//! SP1 guest inputs and a results JSON.
 //!
 //! USAGE:
 //!   panic-simulator --snapshot <path> --output <dir> [--shock-bps 3000]

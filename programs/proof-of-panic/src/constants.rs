@@ -11,7 +11,7 @@ pub const INCENTIVES_CONFIG_SEED: &[u8] = b"incentives_config";
 pub const REWARD_VAULT_SEED: &[u8] = b"reward_vault";
 
 /// Maximum number of positions in the PositionBook.
-/// Fixed at 8 for the demo — keeps the Noir circuit at a manageable size.
+/// Fixed at 8 for the demo — keeps the SP1 zkVM execution at a manageable size.
 pub const MAX_POSITIONS: usize = 8;
 
 /// Scale factor for all monetary values.

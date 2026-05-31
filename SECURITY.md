@@ -7,7 +7,7 @@ This document outlines the known security limitations, trust assumptions, and cr
 ## 1. Cryptographic Caveats
 
 ### State Binding
-The system uses SHA-256 to hash the canonical serialization of the `PositionBook` state. While the on-chain program verifies that the proof's public inputs match this hash, the proof's internal constraints are currently limited to verifying mathematical consistency (PnL, margin, liquidation thresholds) rather than computing the SHA-256 hash inside the circuit. This means the proof currently certifies "these simulated positions produce this risk score," and the program asserts "the simulated positions' hash matches the on-chain state hash." A production system would either compute SHA-256 inside the Noir circuit or migrate to an environment like SP1 that handles SHA-256 via precompiles.
+The system uses SHA-256 to hash the canonical serialization of the `PositionBook` state. The on-chain program verifies that the proof's public inputs match this hash. The ZK proof is executed inside the SP1 zkVM, which natively supports SHA-256 precompiles, certifying that "these simulated positions produce this risk score," and the program asserts "the simulated positions' hash matches the on-chain state hash."
 
 ### Proof Generation Trust
 Currently, proof generation is permissioned to a single administrative authority (`authority`). A malicious or offline admin could selectively withhold proofs that indicate a high risk score, suppressing the circuit breaker. A production implementation requires permissionless proof submission and economic incentives (e.g., bounties) for keepers to generate and submit proofs.

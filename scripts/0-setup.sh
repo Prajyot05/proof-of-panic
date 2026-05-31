@@ -24,10 +24,10 @@ echo "✓ All required tools found"
 echo ""
 
 # Optional ZK tools
-if command -v nargo >/dev/null 2>&1; then
-    echo "✓ nargo found: $(nargo --version)"
+if command -v cargo-prove >/dev/null 2>&1; then
+    echo "✓ SP1 found: $(cargo prove --version)"
 else
-    echo "⚠ nargo not found — install via: curl -L https://raw.githubusercontent.com/noir-lang/noirup/main/install | bash && noirup"
+    echo "⚠ SP1 not found — install via: curl -L https://sp1.succinct.xyz | bash"
 fi
 
 if command -v sunspot >/dev/null 2>&1; then

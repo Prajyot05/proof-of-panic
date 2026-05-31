@@ -41,7 +41,7 @@ impl Position {
 
 /// The full position book — a zero-copy account containing a fixed-size
 /// array of positions. Using a single account instead of per-user accounts
-/// to simplify snapshot serialization, hash commitment, and the Noir circuit.
+/// to simplify snapshot serialization, hash commitment, and the SP1 zkVM proof generation.
 ///
 /// PDA: seeds = [b"position_book"]
 /// Layout: Zero-copy via bytemuck
@@ -66,7 +66,7 @@ impl PositionBook {
     pub const SIZE: usize = 8 + 1 + 7 + (MAX_POSITIONS * Position::SIZE);
 
     /// Serialize all open positions to canonical bytes for SHA-256 hashing.
-    /// The exact same serialization must be used in the Rust simulator and Noir circuit.
+    /// The exact same serialization must be used in the Rust simulator and SP1 zkVM.
     ///
     /// Format: for each position [0..MAX_POSITIONS]:
     ///   owner (32 bytes) | collateral (8 bytes LE) | size (8 bytes LE) |

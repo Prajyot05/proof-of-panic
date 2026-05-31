@@ -143,7 +143,7 @@ ZK proofs allow perpetual protocols to implement **trustless, scalable, automate
 
 ## Risk Model Mathematics
 
-All monetary values are represented in **microdollars** (scale factor S = 10⁶). For example, $150.00 = 150,000,000 microdollars. This eliminates floating-point arithmetic entirely — all computations are integer-only, which is critical for deterministic reproducibility across Rust, the Noir circuit, and on-chain verification.
+All monetary values are represented in **microdollars** (scale factor S = 10⁶). For example, $150.00 = 150,000,000 microdollars. This eliminates floating-point arithmetic entirely — all computations are integer-only, which is critical for deterministic reproducibility across Rust, the SP1 zkVM, and on-chain verification.
 
 ### Price Shock Application
 
@@ -372,7 +372,7 @@ The admin can call `update_risk_params` with `reset_circuit_breaker = true` to:
 | Component | Trust Level | Justification |
 |:----------|:------------|:--------------|
 | Solana validators | Trusted for ordering and execution | Standard blockchain trust model |
-| Noir circuit compiler | Trusted | Open-source, widely audited |
+| SP1 zkVM | Trusted | Open-source, widely audited |
 | Sunspot proof system | Trusted for soundness | Groth16 is a well-studied proof system |
 | Simulator binary | **Untrusted** | ZK proof eliminates the need to trust it |
 | Oracle price source | Semi-trusted | Public input, verifiable on-chain |
@@ -421,7 +421,7 @@ The system is tested against 5 distinct adversarial scenarios to demonstrate rob
 | Metric | Value |
 |:-------|:------|
 | **Simulation time** (5 positions, single scenario) | ~2ms |
-| **Noir circuit compilation** | ~10-30s |
+| **SP1 compilation** | ~10-30s |
 | **Witness generation** (`nargo execute`) | ~2-5s |
 | **Groth16 proof generation** (if sunspot available) | ~10-30s |
 | **Proof size** | ~388 bytes (Groth16) |
@@ -447,7 +447,7 @@ The system is tested against 5 distinct adversarial scenarios to demonstrate rob
 - Atomic snapshot of all positions in one RPC call
 - Deterministic byte serialization for hashing (no Borsh encoding ambiguity)
 - Direct `bytemuck::bytes_of()` for canonical byte extraction
-- Simpler Noir circuit (fixed-size arrays, no dynamic lookups)
+- Simpler SP1 execution (fixed-size arrays, no dynamic lookups)
 
 **Tradeoff**: Limited to 8 positions. A production system would use per-user accounts with a Concurrent Merkle Tree for state commitment.
 
@@ -455,7 +455,7 @@ The system is tested against 5 distinct adversarial scenarios to demonstrate rob
 
 **Decision**: All values in microdollars (10⁶ scale), integer-only arithmetic.
 
-**Why**: Floating-point is non-deterministic across platforms. The same computation in Rust, Noir, and on-chain BPF must produce identical results. Fixed-point with integer division ensures bit-exact reproducibility.
+**Why**: Floating-point is non-deterministic across platforms. The same computation in Rust, SP1, and on-chain BPF must produce identical results. Fixed-point with integer division ensures bit-exact reproducibility.
 
 **Tradeoff**: Integer division truncation (always rounds toward zero). Acceptable for financial simulation where sub-microdollar precision is irrelevant.
 
