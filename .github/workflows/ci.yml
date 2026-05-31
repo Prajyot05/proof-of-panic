@@ -68,6 +68,7 @@ jobs:
         run: |
           # PATH was already persisted via GITHUB_PATH in Setup Solana
           command -v solana
+          rm -f Cargo.lock
           anchor build
 
   frontend:
@@ -139,8 +140,8 @@ jobs:
 
       - name: Deploy Program
         run: |
-          # PATH was already persisted via GITHUB_PATH in Setup Solana
-          command -v solana
+          export PATH="$HOME/.local/share/solana/install/active_release/bin:$PATH"
+          rm -f Cargo.lock
           anchor build
           solana config set --url devnet --keypair deploy-keypair.json
           anchor deploy --provider.cluster devnet --provider.wallet deploy-keypair.json
