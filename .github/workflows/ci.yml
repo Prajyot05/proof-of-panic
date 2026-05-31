@@ -51,7 +51,9 @@ jobs:
         uses: Swatinem/rust-cache@v2
         
       - name: Build Program
-        run: anchor build
+        run: |
+          export PATH="/home/runner/.local/share/solana/install/active_release/bin:$PATH"
+          anchor build
 
   frontend:
     name: Frontend Build
@@ -109,6 +111,7 @@ jobs:
         
       - name: Deploy Program
         run: |
+          export PATH="/home/runner/.local/share/solana/install/active_release/bin:$PATH"
           anchor build
           solana config set --url devnet --keypair deploy-keypair.json
           anchor deploy --provider.cluster devnet --provider.wallet deploy-keypair.json
