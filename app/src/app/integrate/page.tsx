@@ -63,12 +63,11 @@ const highlightTS = (code: string) => {
 export default function IntegratePage() {
   const [copiedRust, setCopiedRust] = useState(false);
   const [copiedTS, setCopiedTS] = useState(false);
+  const [copiedInstall, setCopiedInstall] = useState(false);
   const [activeTab, setActiveTab] = useState<"rust" | "ts">("rust");
   const { isDark, toggleTheme } = useTheme();
 
-  const TS_CODE = `npm install @proof-of-panic/sdk
-
-import { ProofOfPanicClient } from "@proof-of-panic/sdk";
+  const TS_CODE = `import { ProofOfPanicClient } from "@proof-of-panic/sdk";
 
 const client = new ProofOfPanicClient(provider);
 const { globalStatePda } = client.getPDAs();
@@ -78,14 +77,17 @@ if (state.circuitBreakerActive) {
   console.log("MARKET IS UNSAFE. Risk Score:", state.lastRiskScore.toString());
 }`;
 
-  const copyCode = (code: string, type: "rust" | "ts") => {
+  const copyCode = (code: string, type: "rust" | "ts" | "install") => {
     navigator.clipboard.writeText(code);
     if (type === "rust") {
       setCopiedRust(true);
       setTimeout(() => setCopiedRust(false), 2000);
-    } else {
+    } else if (type === "ts") {
       setCopiedTS(true);
       setTimeout(() => setCopiedTS(false), 2000);
+    } else {
+      setCopiedInstall(true);
+      setTimeout(() => setCopiedInstall(false), 2000);
     }
   };
 
@@ -200,6 +202,18 @@ if (state.circuitBreakerActive) {
               title="Copy code"
             >
               {(activeTab === "rust" ? copiedRust : copiedTS) ? <Check size={16} className="icon-emerald" /> : <Copy size={16} />}
+            </button>
+          </div>
+
+          <div style={{ marginBottom: "1rem", display: "flex", alignItems: "center", justifyContent: "space-between", background: "var(--bg-primary)", padding: "0.75rem 1rem", borderRadius: "var(--radius-md)", border: "1px solid var(--border-subtle)" }}>
+            <code style={{ fontFamily: "monospace", fontSize: "0.9rem", color: "var(--color-safe)" }}>
+              {activeTab === "rust" ? "cargo add git+https://github.com/Prajyot05/proof-of-panic.git?dir=programs" : "npm install github:Prajyot05/proof-of-panic#workspace=@proof-of-panic/sdk"}
+            </code>
+            <button 
+              onClick={() => copyCode(activeTab === "rust" ? "cargo add git+https://github.com/Prajyot05/proof-of-panic.git?dir=programs" : "npm install github:Prajyot05/proof-of-panic#workspace=@proof-of-panic/sdk", "install")}
+              className="copy-btn"
+            >
+              {copiedInstall ? <Check size={14} className="icon-emerald" /> : <Copy size={14} />}
             </button>
           </div>
 

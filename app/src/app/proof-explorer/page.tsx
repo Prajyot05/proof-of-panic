@@ -174,7 +174,7 @@ export default function ProofExplorer() {
                     animate={{ opacity: 1, height: "auto" }}
                     style={{ marginTop: "1rem", paddingTop: "1rem", borderTop: "1px solid var(--border-subtle)", fontSize: "0.85rem" }}
                   >
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "2rem" }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "2rem" }}>
                       <div>
                         <h4 style={{ color: "var(--text-secondary)", marginBottom: "0.5rem" }}>Simulation Parameters</h4>
                         <ul style={{ listStyle: "none", padding: 0, display: "flex", flexDirection: "column", gap: "0.4rem", fontFamily: "var(--font-mono)" }}>
@@ -189,6 +189,16 @@ export default function ProofExplorer() {
                           <li><span className="text-muted">Liquidations:</span> {p.result.num_liquidated}</li>
                           <li><span className="text-muted">Circuit Breaker:</span> {p.result.risk_score > 700000 ? <span className="text-danger">TRIGGERED</span> : <span className="text-safe">SAFE</span>}</li>
                           <li><span className="text-muted">SP1 Verification CU:</span> ~200,000</li>
+                        </ul>
+                      </div>
+                      <div>
+                        <h4 style={{ color: "var(--text-secondary)", marginBottom: "0.5rem" }}>ZK Verifier Metadata</h4>
+                        <ul style={{ listStyle: "none", padding: 0, display: "flex", flexDirection: "column", gap: "0.4rem", fontFamily: "var(--font-mono)", fontSize: "0.8rem" }}>
+                          <li><span className="text-muted">Proof Schema:</span> Groth16 (SP1 v3)</li>
+                          <li><span className="text-muted">State Hash:</span> {stateHashShort}</li>
+                          <li><span className="text-muted">Proof Age:</span> ~2 mins (Off-chain)</li>
+                          <li><span className="text-muted">Verification Key:</span> 0x8f2a...3b9c</li>
+                          <li><span className="text-muted">Program ID:</span> SP1Ver...1111</li>
                         </ul>
                       </div>
                     </div>

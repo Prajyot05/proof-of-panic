@@ -29,6 +29,7 @@ export const metadata: Metadata = {
 };
 
 import { Footer } from "@/components/Footer";
+import Script from "next/script";
 
 export default function RootLayout({
   children,
@@ -38,7 +39,9 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <script
+        <Script
+          id="theme-script"
+          strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
             __html: `
               try {

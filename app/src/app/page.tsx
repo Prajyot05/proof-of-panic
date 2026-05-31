@@ -22,6 +22,7 @@ import {
   Database,
   Network,
   Zap,
+  FileText,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -692,6 +693,14 @@ export default function WarRoom() {
               Simulate adversarial market crashes off-chain, prove correctness cryptographically,
               verify on-chain for ~200,000 compute units.
             </p>
+            <div style={{ display: "flex", justifyContent: "center", gap: "1rem", marginTop: "2rem", flexWrap: "wrap" }}>
+              <a href="https://github.com/Prajyot05/proof-of-panic" target="_blank" rel="noreferrer" className="integrate-btn" style={{ background: "var(--text-primary)", color: "var(--bg-primary)" }}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.03c3.15-.38 6.47-1.4 6.47-7.03a5.4 5.4 0 0 0-1.5-3.8 5.4 5.4 0 0 0-.15-3.8s-1.18-.38-3.9 1.4a13.4 13.4 0 0 0-7 0c-2.73-1.78-3.9-1.4-3.9-1.4a5.4 5.4 0 0 0-.15 3.8 5.4 5.4 0 0 0-1.5 3.8c0 5.61 3.32 6.64 6.47 7.03a4.8 4.8 0 0 0-1 3.03V22"></path><path d="M9 20c-5 1.5-5-2.5-7-3"></path></svg> View GitHub
+              </a>
+              <Link href="/architecture" className="integrate-btn" style={{ background: "transparent", border: "1px solid var(--border-subtle)", color: "var(--text-primary)" }}>
+                <FileText size={16} /> Read Whitepaper
+              </Link>
+            </div>
           </motion.div>
 
           <motion.div variants={staggerContainer} initial="hidden" animate="show" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: "1rem", marginBottom: "4rem" }}>
@@ -730,7 +739,7 @@ export default function WarRoom() {
               {isSimulating ? (
                 <span className="verify-btn-content"><Activity className="spinner" size={18} /> Running ZK Pipeline...</span>
               ) : (
-                <span className="verify-btn-content"><Play size={18} /> Execute Selected Scenario</span>
+                <span className="verify-btn-content"><Play size={18} /> Run Judge Mode Demo</span>
               )}
             </button>
           </div>
