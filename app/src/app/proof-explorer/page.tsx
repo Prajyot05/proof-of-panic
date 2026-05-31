@@ -1,34 +1,14 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { ShieldAlert, CheckCircle2, ShieldCheck, Sun, Moon, ArrowLeft, Terminal } from "lucide-react";
+import { ShieldAlert, CheckCircle2, ShieldCheck, Sun, Moon, ArrowLeft, Terminal, ChevronDown, ChevronUp } from "lucide-react";
 import Link from "next/link";
 import { SCENARIOS, formatUsd, formatRiskScore, type SimResult } from "@/lib/types";
 
-// ─── Theme Toggle Hook ───
-function useTheme() {
-  const [isDark, setIsDark] = useState<boolean>(true);
-
-  useEffect(() => {
-    const isDarkMode = document.documentElement.getAttribute("data-theme") === "dark";
-    setIsDark(isDarkMode);
-  }, []);
-
-  const toggleTheme = () => {
-    const nextTheme = !isDark ? "dark" : "light";
-    setIsDark(!isDark);
-    if (nextTheme === "dark") {
-      document.documentElement.setAttribute("data-theme", "dark");
-      localStorage.setItem("theme", "dark");
-    } else {
-      document.documentElement.removeAttribute("data-theme");
-      localStorage.setItem("theme", "light");
-    }
-  };
-
-  return { isDark, toggleTheme };
-}
+import { useTheme } from "@/lib/useTheme";
 
 interface ProofData {
   id: string;
@@ -42,6 +22,7 @@ export default function ProofExplorer() {
   const [proofs, setProofs] = useState<ProofData[]>(
     SCENARIOS.map(s => ({ id: s.id, name: s.name, result: null, status: "Loading" }))
   );
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   useEffect(() => {
     const loadProofs = async () => {
@@ -61,6 +42,10 @@ export default function ProofExplorer() {
     };
     loadProofs();
   }, []);
+
+  const verifiedCount = proofs.filter(p => p.status === "Verified").length;
+  const missingCount = proofs.filter(p => p.status === "Missing").length;
+  const isLoading = proofs.some(p => p.status === "Loading");
 
   return (
     <div className="war-room">
@@ -95,6 +80,19 @@ export default function ProofExplorer() {
           Each state hash serves as a commitment to the canonical on-chain PositionBook prior to simulation.
         </p>
 
+        {!isLoading && (
+          <div style={{ display: "flex", gap: "1rem", marginBottom: "2rem" }}>
+            <div style={{ background: "var(--bg-inset)", border: "1px solid var(--border-subtle)", borderRadius: "var(--radius-md)", padding: "0.5rem 1rem", fontSize: "0.85rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              <ShieldCheck size={14} className="icon-emerald" /> <b>{verifiedCount}</b> Scenarios Verified
+            </div>
+            {missingCount > 0 && (
+              <div style={{ background: "rgba(220, 38, 38, 0.1)", border: "1px solid var(--color-danger)", color: "var(--color-danger)", borderRadius: "var(--radius-md)", padding: "0.5rem 1rem", fontSize: "0.85rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                <ShieldAlert size={14} /> <b>{missingCount}</b> Scenarios Missing (Run simulation to generate)
+              </div>
+            )}
+          </div>
+        )}
+
         <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
           {proofs.map((p) => {
             if (p.status === "Loading") {
@@ -107,14 +105,18 @@ export default function ProofExplorer() {
 
             if (p.status === "Missing" || !p.result) {
               return (
-                <div key={p.id} className="surface-card" style={{ padding: "1rem", borderColor: "var(--color-danger)" }}>
-                  <div className="text-mono text-danger">Missing artifacts for {p.name}</div>
+                <div key={p.id} className="surface-card" style={{ padding: "1rem", borderColor: "var(--border-subtle)", opacity: 0.6 }}>
+                  <div className="text-mono text-muted" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <span>Missing artifacts for {p.name}</span>
+                    <Link href="/" style={{ color: "var(--color-info)", fontSize: "0.8rem", textDecoration: "none" }}>Run simulation →</Link>
+                  </div>
                 </div>
               );
             }
 
             const stateHashShort = "0x" + p.result.state_hash.slice(0, 8).map(b => b.toString(16).padStart(2, "0")).join("");
             const proofHashMock = "0x" + Array.from({length: 8}, (_, i) => ((p.result!.state_hash[i] + i * 13) % 256).toString(16).padStart(2, "0")).join("");
+            const isExpanded = expandedId === p.id;
 
             return (
               <motion.div 
@@ -122,37 +124,68 @@ export default function ProofExplorer() {
                 animate={{ opacity: 1, y: 0 }}
                 key={p.id} 
                 className="surface-card" 
-                style={{ padding: "1rem", display: "grid", gridTemplateColumns: "1.5fr 1fr 1fr 1fr 0.5fr", alignItems: "center", gap: "1rem" }}
+                style={{ padding: "1rem", cursor: "pointer", transition: "background 0.2s" }}
+                onClick={() => setExpandedId(isExpanded ? null : p.id)}
               >
-                <div>
-                  <div className="text-secondary" style={{ fontSize: "0.75rem", fontWeight: 600, textTransform: "uppercase" }}>Scenario</div>
-                  <div className="text-primary" style={{ fontWeight: 600 }}>{p.name}</div>
-                </div>
-                <div>
-                  <div className="text-secondary" style={{ fontSize: "0.75rem", fontWeight: 600, textTransform: "uppercase" }}>State Hash</div>
-                  <div className="text-mono" style={{ color: "var(--color-info)" }}>{stateHashShort}...</div>
-                </div>
-                <div>
-                  <div className="text-secondary" style={{ fontSize: "0.75rem", fontWeight: 600, textTransform: "uppercase" }}>Proof Hash</div>
-                  <div className="text-mono" style={{ color: "var(--text-muted)" }}>{proofHashMock}...</div>
-                </div>
-                <div>
-                  <div className="text-secondary" style={{ fontSize: "0.75rem", fontWeight: 600, textTransform: "uppercase" }}>Risk / Bad Debt</div>
-                  <div className="text-mono">
-                    <span className={formatRiskScore(p.result.risk_score) >= 70 ? "text-danger" : "text-safe"}>
-                      {formatRiskScore(p.result.risk_score).toFixed(1)}%
-                    </span>
-                    {" / "}
-                    <span className={p.result.total_bad_debt > 0 ? "text-danger" : "text-muted"}>
-                      {p.result.total_bad_debt > 0 ? formatUsd(p.result.total_bad_debt) : "$0"}
-                    </span>
+                <div className="proof-explorer-grid">
+                  <div>
+                    <div className="text-secondary" style={{ fontSize: "0.75rem", fontWeight: 600, textTransform: "uppercase" }}>Scenario</div>
+                    <div className="text-primary" style={{ fontWeight: 600 }}>{p.name}</div>
+                  </div>
+                  <div>
+                    <div className="text-secondary" style={{ fontSize: "0.75rem", fontWeight: 600, textTransform: "uppercase" }}>State Hash</div>
+                    <div className="text-mono" style={{ color: "var(--color-info)" }}>{stateHashShort}...</div>
+                  </div>
+                  <div>
+                    <div className="text-secondary" style={{ fontSize: "0.75rem", fontWeight: 600, textTransform: "uppercase" }}>Proof Hash</div>
+                    <div className="text-mono" style={{ color: "var(--text-muted)" }}>{proofHashMock}...</div>
+                  </div>
+                  <div>
+                    <div className="text-secondary" style={{ fontSize: "0.75rem", fontWeight: 600, textTransform: "uppercase" }}>Risk / Bad Debt</div>
+                    <div className="text-mono">
+                      <span className={formatRiskScore(p.result.risk_score) >= 70 ? "text-danger" : "text-safe"}>
+                        {formatRiskScore(p.result.risk_score).toFixed(1)}%
+                      </span>
+                      {" / "}
+                      <span className={p.result.total_bad_debt > 0 ? "text-danger" : "text-muted"}>
+                        {p.result.total_bad_debt > 0 ? formatUsd(p.result.total_bad_debt) : "$0"}
+                      </span>
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: "0.5rem" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.25rem", color: "var(--color-safe)", fontSize: "0.85rem", fontWeight: 600 }}>
+                      <ShieldCheck size={16} /> Verified
+                    </div>
+                    {isExpanded ? <ChevronUp size={16} className="text-muted" /> : <ChevronDown size={16} className="text-muted" />}
                   </div>
                 </div>
-                <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "0.25rem", color: "var(--color-safe)", fontSize: "0.85rem", fontWeight: 600 }}>
-                    <ShieldCheck size={16} /> Verified
-                  </div>
-                </div>
+
+                {isExpanded && (
+                  <motion.div 
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    style={{ marginTop: "1rem", paddingTop: "1rem", borderTop: "1px solid var(--border-subtle)", fontSize: "0.85rem" }}
+                  >
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "2rem" }}>
+                      <div>
+                        <h4 style={{ color: "var(--text-secondary)", marginBottom: "0.5rem" }}>Simulation Parameters</h4>
+                        <ul style={{ listStyle: "none", padding: 0, display: "flex", flexDirection: "column", gap: "0.4rem", fontFamily: "var(--font-mono)" }}>
+                          <li><span className="text-muted">Shock Direction:</span> {p.result.shock_direction_up ? "UP" : "DOWN"}</li>
+                          <li><span className="text-muted">Magnitude:</span> {p.result.shock_bps / 100}%</li>
+                          <li><span className="text-muted">Post-Shock Price:</span> {formatUsd(p.result.post_shock_price)}</li>
+                        </ul>
+                      </div>
+                      <div>
+                        <h4 style={{ color: "var(--text-secondary)", marginBottom: "0.5rem" }}>Outcome</h4>
+                        <ul style={{ listStyle: "none", padding: 0, display: "flex", flexDirection: "column", gap: "0.4rem", fontFamily: "var(--font-mono)" }}>
+                          <li><span className="text-muted">Liquidations:</span> {p.result.num_liquidated}</li>
+                          <li><span className="text-muted">Circuit Breaker:</span> {p.result.risk_score > 700000 ? <span className="text-danger">TRIGGERED</span> : <span className="text-safe">SAFE</span>}</li>
+                          <li><span className="text-muted">SP1 Verification CU:</span> ~200,000</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
               </motion.div>
             );
           })}

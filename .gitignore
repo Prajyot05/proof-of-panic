@@ -44,3 +44,6 @@ scripts/demo-snapshot.json
 .env.development.local
 .env.test.local
 .env.production.local
+
+# Outputs
+outputs/

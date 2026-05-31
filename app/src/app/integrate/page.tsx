@@ -3,31 +3,9 @@
 import { motion } from "framer-motion";
 import { ArrowLeft, Code, Cpu, ShieldCheck, Copy, Check, Sun, Moon } from "lucide-react";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
-// ─── Theme Toggle Hook ───
-function useTheme() {
-  const [isDark, setIsDark] = useState<boolean>(true);
-
-  useEffect(() => {
-    const isDarkMode = document.documentElement.getAttribute("data-theme") === "dark";
-    setIsDark(isDarkMode);
-  }, []);
-
-  const toggleTheme = () => {
-    const nextTheme = !isDark ? "dark" : "light";
-    setIsDark(!isDark);
-    if (nextTheme === "dark") {
-      document.documentElement.setAttribute("data-theme", "dark");
-      localStorage.setItem("theme", "dark");
-    } else {
-      document.documentElement.removeAttribute("data-theme");
-      localStorage.setItem("theme", "light");
-    }
-  };
-
-  return { isDark, toggleTheme };
-}
+import { useTheme } from "@/lib/useTheme";
 
 const CPI_CODE = `use anchor_lang::prelude::*;
 use proof_of_panic::state::GlobalState;
@@ -64,27 +42,69 @@ pub fn execute_trade(ctx: Context<YourRiskSensitiveInstruction>) -> Result<()> {
     Ok(())
 }`;
 
+const highlightRust = (code: string) => {
+  const highlighted = code
+    .replace(/(pub fn|fn|pub struct|struct|use|impl|for|let|mut|if|else|match|return)\b/g, '<span style="color: #ff7b72">$1</span>')
+    .replace(/(Result|Context|Account|GlobalState|YourRiskSensitiveInstruction|Option|String)\b/g, '<span style="color: #79c0ff">$1</span>')
+    .replace(/(\/\/.*)/g, '<span style="color: #8b949e">$1</span>')
+    .replace(/(\bmsg!\b|\brequire!\b|\berr!\b)/g, '<span style="color: #d2a8ff">$1</span>')
+    .replace(/#\[(.*?)\]/g, '<span style="color: #d2a8ff">#[$1]</span>');
+  return { __html: highlighted };
+};
+
+const highlightTS = (code: string) => {
+  const highlighted = code
+    .replace(/(import|from|const|let|var|if|else|await|async|new|console)\b/g, '<span style="color: #ff7b72">$1</span>')
+    .replace(/(\/\/.*)/g, '<span style="color: #8b949e">$1</span>')
+    .replace(/(["'`].*?["'`])/g, '<span style="color: #a5d6ff">$1</span>');
+  return { __html: highlighted };
+};
+
 export default function IntegratePage() {
-  const [copied, setCopied] = useState(false);
+  const [copiedRust, setCopiedRust] = useState(false);
+  const [copiedTS, setCopiedTS] = useState(false);
+  const [activeTab, setActiveTab] = useState<"rust" | "ts">("rust");
   const { isDark, toggleTheme } = useTheme();
 
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(CPI_CODE);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const TS_CODE = `npm install @proof-of-panic/sdk
+
+import { ProofOfPanicClient } from "@proof-of-panic/sdk";
+
+const client = new ProofOfPanicClient(provider);
+const { globalStatePda } = client.getPDAs();
+
+const state = await client.program.account.globalState.fetch(globalStatePda);
+if (state.circuitBreakerActive) {
+  console.log("MARKET IS UNSAFE. Risk Score:", state.lastRiskScore.toString());
+}`;
+
+  const copyCode = (code: string, type: "rust" | "ts") => {
+    navigator.clipboard.writeText(code);
+    if (type === "rust") {
+      setCopiedRust(true);
+      setTimeout(() => setCopiedRust(false), 2000);
+    } else {
+      setCopiedTS(true);
+      setTimeout(() => setCopiedTS(false), 2000);
+    }
   };
 
   return (
     <div className="war-room">
       <header className="header">
         <div className="header-brand">
-          <Link href="/" style={{ textDecoration: 'none' }}>
-            <button className="live-rpc-btn">
-              <ArrowLeft size={14} /> Back to Dashboard
-            </button>
-          </Link>
+          <div className="header-logo">
+            <img src="/logo.png" alt="Proof of Panic Logo" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+          </div>
+          <div>
+            <div className="header-title">Proof of Panic</div>
+            <div className="header-subtitle">Integration Guide</div>
+          </div>
         </div>
         <div className="header-actions">
+          <Link href="/" className="integrate-btn" style={{ background: "transparent", border: "1px solid var(--border-subtle)", color: "var(--text-secondary)" }}>
+            <ArrowLeft size={14} /> Back to Dashboard
+          </Link>
           <button onClick={toggleTheme} className="theme-toggle">
             {isDark ? <Sun size={18} /> : <Moon size={18} />}
           </button>
@@ -114,26 +134,26 @@ export default function IntegratePage() {
           <div className="card-header">
             <h2 className="card-title"><ShieldCheck className="icon-blue" size={20} /> How it Works</h2>
           </div>
-          <div className="timeline">
+          <div className="timeline" style={{ marginTop: "1rem" }}>
             <div className="timeline-event event-shock">
-              <div className="timeline-icon-container"></div>
+              <div className="timeline-icon-container">1</div>
               <div className="timeline-content">
-                <div className="timeline-title">Risk Oracle</div>
-                <div className="timeline-detail">Our network of keepers simulates market crashes. If they prove a SOL crash causes insolvency, they submit a ZK-proof.</div>
+                <div className="timeline-title">Risk Oracle Monitoring</div>
+                <div className="timeline-detail">Our network of keepers simulates market crashes off-chain. If they prove a SOL crash causes insolvency, they generate an SP1 ZK-proof.</div>
               </div>
             </div>
             <div className="timeline-event event-breaker">
-              <div className="timeline-icon-container"></div>
+              <div className="timeline-icon-container">2</div>
               <div className="timeline-content">
                 <div className="timeline-title">Circuit Breaker Activation</div>
-                <div className="timeline-detail">When a valid proof is verified on-chain, our circuit_breaker_active flag is flipped to true.</div>
+                <div className="timeline-detail">When a valid proof is verified on-chain via the Anchor program, our circuit_breaker_active flag is flipped to true.</div>
               </div>
             </div>
             <div className="timeline-event event-safe">
-              <div className="timeline-icon-container"></div>
+              <div className="timeline-icon-container">3</div>
               <div className="timeline-content">
-                <div className="timeline-title">Protocol Integration</div>
-                <div className="timeline-detail">Your protocol reads this flag. If active, you automatically pause operations or enforce tighter margin requirements.</div>
+                <div className="timeline-title">Protocol Integration (You)</div>
+                <div className="timeline-detail">Your protocol reads this flag via CPI or TS SDK. If active, you automatically pause operations or enforce tighter margin requirements.</div>
               </div>
             </div>
           </div>
@@ -145,51 +165,45 @@ export default function IntegratePage() {
           transition={{ delay: 0.2 }}
           className="surface-card"
         >
-          <div className="card-header">
-            <h2 className="card-title"><Code className="icon-emerald" size={20} /> Rust CPI Example</h2>
+          <div className="card-header" style={{ borderBottom: "1px solid var(--border-subtle)", paddingBottom: "1rem", marginBottom: "1rem" }}>
+            <div style={{ display: "flex", gap: "1rem" }}>
+              <button 
+                onClick={() => setActiveTab("rust")}
+                style={{ 
+                  background: "transparent", border: "none", color: activeTab === "rust" ? "var(--text-primary)" : "var(--text-muted)", 
+                  fontWeight: activeTab === "rust" ? 600 : 400, cursor: "pointer", fontSize: "1rem", display: "flex", alignItems: "center", gap: "0.5rem" 
+                }}
+              >
+                <Code size={18} className={activeTab === "rust" ? "icon-emerald" : ""} /> Anchor CPI
+              </button>
+              <button 
+                onClick={() => setActiveTab("ts")}
+                style={{ 
+                  background: "transparent", border: "none", color: activeTab === "ts" ? "var(--text-primary)" : "var(--text-muted)", 
+                  fontWeight: activeTab === "ts" ? 600 : 400, cursor: "pointer", fontSize: "1rem", display: "flex", alignItems: "center", gap: "0.5rem" 
+                }}
+              >
+                <Cpu size={18} className={activeTab === "ts" ? "icon-blue" : ""} /> Typescript SDK
+              </button>
+            </div>
             <button 
-              onClick={copyToClipboard}
+              onClick={() => copyCode(activeTab === "rust" ? CPI_CODE : TS_CODE, activeTab)}
               className="copy-btn"
               title="Copy code"
             >
-              {copied ? <Check size={16} className="icon-emerald" /> : <Copy size={16} />}
+              {(activeTab === "rust" ? copiedRust : copiedTS) ? <Check size={16} className="icon-emerald" /> : <Copy size={16} />}
             </button>
           </div>
           
-          <div className="code-block-container">
-            <code>{CPI_CODE}</code>
+          <div className="code-block-container" style={{ background: "#0d1117", minHeight: "350px" }}>
+            {activeTab === "rust" ? (
+              <code dangerouslySetInnerHTML={highlightRust(CPI_CODE)} />
+            ) : (
+              <code dangerouslySetInnerHTML={highlightTS(TS_CODE)} />
+            )}
           </div>
         </motion.div>
       </div>
-
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-        className="surface-card"
-      >
-        <div className="card-header">
-          <h2 className="card-title"><Cpu className="icon-blue" size={20} /> Typescript SDK</h2>
-        </div>
-        <p className="text-secondary" style={{ marginBottom: "1rem" }}>
-          We also provide a fully-typed TypeScript SDK for reading risk state from your frontend or off-chain workers.
-        </p>
-        <div className="code-block-container">
-          <code>
-{`npm install @proof-of-panic/sdk
-
-import { ProofOfPanicClient } from "@proof-of-panic/sdk";
-
-const client = new ProofOfPanicClient(provider);
-const { globalStatePda } = client.getPDAs();
-
-const state = await client.program.account.globalState.fetch(globalStatePda);
-if (state.circuitBreakerActive) {
-  console.log("MARKET IS UNSAFE. Risk Score:", state.lastRiskScore.toString());
-}`}
-          </code>
-        </div>
-      </motion.div>
     </div>
   );
 }

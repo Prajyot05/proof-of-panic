@@ -986,3 +986,210 @@ body {
 .copy-btn:hover {
   color: var(--text-primary);
 }
+
+/* ── Global Footer ── */
+.global-footer {
+  border-top: 1px solid var(--border-subtle);
+  padding: 2rem 0;
+  margin-top: 4rem;
+  background: var(--bg-surface);
+}
+
+.footer-content {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+}
+
+.footer-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.footer-right {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+
+.tech-stack {
+  display: flex;
+  gap: 0.5rem;
+  color: var(--text-muted);
+}
+
+.footer-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.footer-link:hover {
+  color: var(--text-primary);
+}
+
+/* ── Mobile Responsiveness ── */
+@media (max-width: 1200px) {
+  .proof-explorer-grid {
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 1024px) {
+  .grid-top {
+    grid-template-columns: 1fr;
+  }
+  .grid-bottom {
+    grid-template-columns: 1fr;
+  }
+  .proof-explorer-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .war-room {
+    padding: 1rem;
+  }
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  .header-actions {
+    width: 100%;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+  .scenario-selector {
+    overflow-x: auto;
+    width: 100%;
+    justify-content: flex-start;
+    padding-bottom: 0.5rem;
+  }
+  .grid-positions {
+    grid-template-columns: 1fr;
+  }
+  .circuit-breaker-banner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  .metrics-bar {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+  .breaker-details {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .summary-stats {
+    grid-template-columns: 1fr;
+  }
+  .proof-explorer-grid {
+    grid-template-columns: 1fr;
+  }
+  .footer-content {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+  .footer-right {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+  
+  /* Make horizontal scrolling lists hidden scrollbar */
+  .scenario-selector::-webkit-scrollbar {
+    display: none;
+  }
+  .scenario-selector {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .scenario-tab {
+    font-size: 0.75rem;
+    padding: 0.4rem 0.6rem;
+  }
+  .meter-value {
+    font-size: 2rem;
+  }
+  .meter-ring {
+    width: 140px;
+    height: 140px;
+  }
+  .metrics-bar {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Shimmer & Glow Effects ── */
+@keyframes shimmer {
+  0% { background-position: -1000px 0; }
+  100% { background-position: 1000px 0; }
+}
+
+.shimmer {
+  animation: shimmer 2s infinite linear;
+  background: linear-gradient(to right, var(--bg-inset) 4%, var(--border-subtle) 25%, var(--bg-inset) 36%);
+  background-size: 1000px 100%;
+}
+
+.status-dot.danger {
+  box-shadow: 0 0 8px var(--color-danger);
+  animation: pulse-danger 1.5s infinite;
+}
+
+@keyframes pulse-danger {
+  0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7); }
+  70% { box-shadow: 0 0 0 6px rgba(220, 38, 38, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+}
+
+.status-dot.safe {
+  box-shadow: 0 0 8px var(--color-safe);
+  animation: pulse-safe 2s infinite;
+}
+
+@keyframes pulse-safe {
+  0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5); }
+  70% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+.surface-card {
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.surface-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+/* Scrollbar for terminal feed */
+.terminal-feed::-webkit-scrollbar {
+  width: 8px;
+}
+.terminal-feed::-webkit-scrollbar-track {
+  background: var(--bg-surface);
+}
+.terminal-feed::-webkit-scrollbar-thumb {
+  background: var(--border-subtle);
+  border-radius: 4px;
+}
+.terminal-feed::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}

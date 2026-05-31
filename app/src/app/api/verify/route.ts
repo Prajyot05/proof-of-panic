@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { NextResponse } from "next/server";
 import { Connection, Keypair, PublicKey, Transaction } from "@solana/web3.js";
 import { Program, AnchorProvider } from "@coral-xyz/anchor";
