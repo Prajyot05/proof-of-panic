@@ -22,7 +22,7 @@ test-mock-verify = []
 
 
 [dependencies]
-anchor-lang = "0.30.1"
+anchor-lang = "0.30.3"
 proof-of-panic = { path = "../proof-of-panic", features = ["cpi"] }
 
 
