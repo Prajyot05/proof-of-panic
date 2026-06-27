@@ -6,13 +6,6 @@ members = [
 ]
 resolver = "2"
 
-# Pin transitive dependencies to versions that don't require edition2024.
-# The Solana platform-tools bundled with v1.18.23 uses Cargo 1.75 which can't
-# parse edition2024 manifests.  indexmap ≥2.14 and hashbrown ≥0.17 moved to
-# edition2024, so Cargo.lock pins them via:
-#   cargo update indexmap@<bad> --precise 2.13.0
-# Do NOT run a bare `cargo update` – it would pull edition2024 crates again.
-
 [profile.release]
 overflow-checks = true
 lto = "fat"

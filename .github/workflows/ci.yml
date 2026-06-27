@@ -8,6 +8,10 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  # Agave/Solana CLI version used for anchor build & deploy.
+  # Must bundle platform-tools with Cargo ≥1.85 so it can parse
+  # edition2024 crate manifests.
+  SOLANA_VERSION: "v2.1.21"
 
 jobs:
   rust-checks:
@@ -42,8 +46,7 @@ jobs:
       - name: Setup Solana
         run: |
           sudo apt-get update && sudo apt-get install -y pkg-config build-essential libudev-dev libssl-dev
-          curl -fsSL --retry 5 --retry-all-errors https://release.anza.xyz/v1.18.23/install -o solana-install.sh || \
-            curl -fsSL --retry 5 --retry-all-errors https://release.solana.com/v1.18.23/install -o solana-install.sh
+          curl -fsSL --retry 5 --retry-all-errors "https://release.anza.xyz/${SOLANA_VERSION}/install" -o solana-install.sh
           sh solana-install.sh
           if [ -d "$HOME/.local/share/solana/install/active_release/bin" ]; then
             SOLANA_BIN="$HOME/.local/share/solana/install/active_release/bin"
@@ -68,14 +71,6 @@ jobs:
         run: |
           # PATH was already persisted via GITHUB_PATH in Setup Solana
           command -v solana
-          # Solana/Anchor toolchains in CI can fail on lockfile v4.
-          # Normalize all Cargo.lock files to v3 for compatibility.
-          find . -name Cargo.lock -type f -print0 | while IFS= read -r -d '' lock; do
-            if grep -q '^version = 4$' "$lock"; then
-              echo "Normalizing lockfile: $lock"
-              sed -i 's/^version = 4$/version = 3/' "$lock"
-            fi
-          done
           anchor build
 
   frontend:
@@ -120,8 +115,7 @@ jobs:
       - name: Setup Solana
         run: |
           sudo apt-get update && sudo apt-get install -y pkg-config build-essential libudev-dev libssl-dev
-          curl -fsSL --retry 5 --retry-all-errors https://release.anza.xyz/v1.18.23/install -o solana-install.sh || \
-            curl -fsSL --retry 5 --retry-all-errors https://release.solana.com/v1.18.23/install -o solana-install.sh
+          curl -fsSL --retry 5 --retry-all-errors "https://release.anza.xyz/${SOLANA_VERSION}/install" -o solana-install.sh
           sh solana-install.sh
           if [ -d "$HOME/.local/share/solana/install/active_release/bin" ]; then
             SOLANA_BIN="$HOME/.local/share/solana/install/active_release/bin"
@@ -149,13 +143,6 @@ jobs:
         run: |
           # PATH was already persisted via GITHUB_PATH in Setup Solana
           command -v solana
-          # Keep deployment build path consistent with anchor-build job.
-          find . -name Cargo.lock -type f -print0 | while IFS= read -r -d '' lock; do
-            if grep -q '^version = 4$' "$lock"; then
-              echo "Normalizing lockfile: $lock"
-              sed -i 's/^version = 4$/version = 3/' "$lock"
-            fi
-          done
           anchor build
           solana config set --url devnet --keypair deploy-keypair.json
           anchor deploy --provider.cluster devnet --provider.wallet deploy-keypair.json
