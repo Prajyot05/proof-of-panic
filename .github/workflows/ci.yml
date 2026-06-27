@@ -11,7 +11,7 @@ env:
   # Agave/Solana CLI version used for anchor build & deploy.
   # Must bundle platform-tools with Cargo ≥1.85 so it can parse
   # edition2024 crate manifests.
-  SOLANA_VERSION: "v2.1.21"
+  SOLANA_VERSION: "v4.0.3"
 
 jobs:
   rust-checks:

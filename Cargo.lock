@@ -2173,6 +2173,7 @@ dependencies = [
  "bytemuck",
  "pyth-sdk-solana",
  "sha2 0.10.9",
+ "solana-pubkey",
  "sp1-solana",
 ]
 

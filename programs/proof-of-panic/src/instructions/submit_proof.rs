@@ -136,8 +136,9 @@ pub fn handler(
             pyth_sdk_solana::state::load_price_account(&pyth_data)
                 .map_err(|_| PanicError::InvalidOracle)?;
 
+        let price_key = solana_pubkey::Pubkey::new_from_array(pyth_acc.key().to_bytes());
         let current_price = price_account
-            .to_price_feed(&pyth_acc.key())
+            .to_price_feed(&price_key)
             .get_price_unchecked()
             .price;
         let expo = price_account.expo;
@@ -162,7 +163,7 @@ pub fn handler(
         let admin_info = ctx.accounts.admin.to_account_info();
         require!(admin_info.is_signer, PanicError::MissingGovernanceSignature);
         require!(
-            admin_info.key == global_state.authority,
+            *admin_info.key == global_state.authority,
             PanicError::InvalidGovernance
         );
     }
