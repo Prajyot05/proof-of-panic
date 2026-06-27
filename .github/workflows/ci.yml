@@ -71,7 +71,7 @@ jobs:
         run: |
           # PATH was already persisted via GITHUB_PATH in Setup Solana
           command -v solana
-          anchor build
+          RUSTFLAGS="--cfg procmacro2_semver_exempt" anchor build
 
   frontend:
     name: Frontend Build
