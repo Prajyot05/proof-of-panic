@@ -6,6 +6,7 @@
 /// - Accepts ZK proofs of off-chain stress-test simulations
 /// - Verifies proofs via CPI to a Sunspot verifier program
 /// - Activates a circuit breaker when risk thresholds are exceeded
+#![allow(unexpected_cfgs)]
 use anchor_lang::prelude::*;
 
 pub mod constants;
