@@ -47,6 +47,8 @@ proptest! {
         risk_config in arbitrary_risk_config(),
         current_price in 1..200_000_000u64
     ) {
+        let original_sizes: Vec<u64> = positions.iter().map(|position| position.size).collect();
+
         // Run the evaluation
         let result = evaluate_positions(&mut positions, current_price, &risk_config);
 
@@ -55,9 +57,9 @@ proptest! {
             // 1. Price never increases due to liquidations in our model
             prop_assert!(final_price <= current_price);
 
-            // 2. Liquidated size is never negative and never exceeds position size
-            for i in 0..positions.len() {
-                prop_assert!(results[i].liquidated_size <= positions[i].size || positions[i].size == 0); // Position size after liquidation could be 0, wait, it's original size
+            // 2. Liquidated size should never exceed the original position size.
+            for i in 0..original_sizes.len() {
+                prop_assert!(results[i].liquidated_size <= original_sizes[i]);
             }
         }
     }
