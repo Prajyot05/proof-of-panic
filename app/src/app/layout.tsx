@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Proof of Panic - War Room",
     description: "ZK-verified adversarial risk engine for Solana perpetual protocols.",
-    url: "https://proofofpanic.com",
+    url: "https://proof-of-panic.vercel.app",
     siteName: "Proof of Panic",
     images: [
       {
